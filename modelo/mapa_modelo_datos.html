@@ -288,7 +288,7 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
         <button role="tab" data-tab="notes" aria-selected="false">Revisión<span class="n" id="n-notes"></span></button>
       </div>
       <div class="list" id="list"></div>
-      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Doble clic en una tabla o en un módulo para acercarte; doble clic en el fondo para ver todo. Ctrl + rueda o pellizco para el zoom; teclas 1–7 para ir a cada módulo; P para ver solo el lienzo.</div>
+      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Doble clic en una tabla o en un módulo para acercarte; doble clic en el fondo para ver todo. La rueda del mouse (o el pellizco) hace zoom hacia donde apuntás; teclas 1–7 para ir a cada módulo; P para ver solo el lienzo.</div>
     </aside>
 
     <main class="stage" id="stage" aria-label="Diagrama del modelo de datos">
@@ -1915,8 +1915,10 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
     if (e.target.closest('.drawer, .tour')) return;
     e.preventDefault(); S.touched = true;
     var r = stage.getBoundingClientRect();
-    if (e.ctrlKey || e.metaKey) zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.01));
-    else { S.view.x -= e.deltaX; S.view.y -= e.deltaY; applyView(false); }
+    // La rueda siempre hace zoom hacia donde apunta el mouse; para mover el lienzo se arrastra.
+    var dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+    dy = Math.max(-120, Math.min(120, dy));
+    zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0022)));
     applyFocus();
   }, { passive: false });
   stage.addEventListener('keydown', function (e) { var c = e.target.closest('.tbl'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(c.dataset.t, false); } });
