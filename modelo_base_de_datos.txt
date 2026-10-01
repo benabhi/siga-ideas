@@ -1,0 +1,693 @@
+Project universite_db {
+  database_type: "MySQL"
+  Note: "Sistema de Registro Académico Universitario"
+}
+
+
+// ============================================================
+// MÓDULO 1: AUTENTICACIÓN Y ROLES
+// ============================================================
+
+Table roles {
+  id_rol int [pk, increment]
+  nombre_rol varchar(50) [not null, unique]
+  descripcion varchar(255)
+}
+
+Table usuarios {
+  id_usuario int [pk, increment]
+  id_rol int [not null]
+  email varchar(120) [not null, unique]
+  password varchar(255) [not null]
+  nombre varchar(100) [not null]
+  apellido varchar(100) [not null]
+  dni int [not null, unique]
+  fecha_nacimiento date [not null]
+  telefono varchar(30)
+  estado enum("activo", "inactivo", "bloqueado") [default: "activo"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    id_rol
+  }
+}
+
+Table usuario_roles {
+  id_usuario int [not null]
+  id_rol int [not null]
+  activo boolean [not null, default: true]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_usuario, id_rol) [pk]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 2: ESTRUCTURA ACADÉMICA
+// ============================================================
+
+Table carreras {
+  id_carrera int [pk, increment]
+  codigo varchar(20) [not null, unique]
+  nombre_carrera varchar(150) [not null]
+  duracion_anios int [not null, default: 3]
+  descripcion text
+  estado enum("activa", "inactiva") [default: "activa"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table planes_estudio {
+  id_plan_estudio int [pk, increment]
+  id_carrera int [not null]
+  codigo_plan varchar(30) [not null]
+  nombre varchar(150) [not null]
+  resolucion varchar(100)
+  anio_inicio int [not null]
+  anio_fin int
+  estado enum("activo", "inactivo", "obsoleto") [default: "activo"]
+  es_vigente_inscripcion boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_carrera, codigo_plan) [unique]
+  }
+}
+
+Table materias {
+  id_materia int [pk, increment]
+  id_carrera int [not null]
+  codigo_materia varchar(20) [not null]
+  nombre_materia varchar(150) [not null]
+  tipo_materia enum("anual", "cuatrimestral") [not null, default: "cuatrimestral"]
+  anio_cursada int [not null, default: 1]
+  cuatrimestre int [not null, default: 1]
+  promocionable enum("si", "no") [default: "si"]
+  estado enum("activa", "inactiva") [default: "activa"]
+  resolucion varchar(20) [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    id_carrera
+    codigo_materia
+  }
+}
+
+Table plan_materias {
+  id_plan_materia int [pk, increment]
+  id_plan_estudio int [not null]
+  id_materia int [not null]
+  anio_cursada int [not null, default: 1]
+  cuatrimestre int [not null, default: 1]
+  es_optativa boolean [default: false]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_plan_estudio, id_materia) [unique]
+  }
+}
+
+Table periodos_inscripcion {
+  id_periodo_inscripcion int [pk, increment]
+  codigo_periodo varchar(30) [not null, unique]
+  nombre varchar(150) [not null]
+  ciclo_lectivo int [not null]
+  fecha_inicio datetime [not null]
+  fecha_fin datetime [not null]
+  estado enum("programado", "abierto", "cerrado", "finalizado") [default: "programado"]
+  descripcion text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table periodo_carrera_planes {
+  id_periodo_carrera_plan int [pk, increment]
+  id_periodo_inscripcion int [not null]
+  id_carrera int [not null]
+  id_plan_estudio int [not null]
+  cupo_preinscriptos int [not null, default: 0]
+  cupo_lista_espera int [not null, default: 0]
+  fecha_inicio datetime
+  fecha_fin datetime
+  estado enum("activa", "cupo_cubierto", "lista_espera_cubierta", "cerrada") [default: "activa"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_periodo_inscripcion, id_carrera, id_plan_estudio) [unique]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 3: ESTUDIANTES Y PREINSCRIPCIONES
+// ============================================================
+
+Table estudiantes {
+  id_estudiante int [pk, increment]
+  id_usuario int [not null, unique]
+  legajo varchar(30) [not null, unique]
+  id_carrera int [not null]
+  id_plan_estudio int
+  fecha_ingreso date [not null]
+  situacion_academica enum(
+    "preinscripto",
+    "inscripto",
+    "regular",
+    "recibido",
+    "suspendido",
+    "baja"
+  ) [default: "preinscripto"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table preinscripciones {
+  id_preinscripcion int [pk, increment]
+  id_periodo_carrera_plan int [not null]
+  id_usuario int [not null]
+  id_estudiante int
+  fecha_preinscripcion datetime [not null, default: `CURRENT_TIMESTAMP`]
+  estado enum(
+    "preinscripto",
+    "lista_espera",
+    "en_revision",
+    "confirmado",
+    "rechazado",
+    "cancelado"
+  ) [not null, default: "preinscripto"]
+  observaciones text
+  id_usuario_revisor int
+  fecha_revision datetime
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_usuario, id_periodo_carrera_plan) [unique]
+  }
+}
+
+Table documentos_estudiantes {
+  id_documento int [pk, increment]
+  id_estudiante int [not null]
+  id_preinscripcion int
+  tipo_documento enum(
+    "DNI",
+    "Titulo Secundario",
+    "Analitico",
+    "Foto Carnet",
+    "Otro"
+  ) [not null]
+  nombre_archivo varchar(255) [not null]
+  ruta_archivo varchar(255) [not null]
+  estado_verificacion enum(
+    "pendiente",
+    "aprobado",
+    "rechazado"
+  ) [default: "pendiente"]
+  observaciones text
+  id_usuario_verificador int
+  fecha_verificacion datetime
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table historial_cambios_plan {
+  id_cambio_plan int [pk, increment]
+  id_estudiante int [not null]
+  id_plan_anterior int [not null]
+  id_plan_nuevo int [not null]
+  motivo text
+  fecha_cambio datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table configuraciones_cursada {
+  id_configuracion int [pk, increment]
+  id_materia int
+  porcentaje_asistencia_minima decimal(5,2) [not null, default: 75.00]
+  nota_minima_regular decimal(4,2) [not null, default: 4.00]
+  permite_promocion boolean [not null, default: true]
+  nota_minima_promocion decimal(4,2) [not null, default: 7.00]
+  meses_vigencia_regularidad int [not null, default: 24]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+
+// ============================================================
+// MÓDULO 4: CURSADAS, EVALUACIONES Y CALIFICACIONES
+// ============================================================
+
+Table cursadas {
+  id_cursada int [pk, increment]
+  id_estudiante int [not null]
+  id_materia int [not null]
+  id_plan_estudio int [not null]
+  ciclo_lectivo int [not null]
+  periodo enum(
+    "1er Cuatrimestre",
+    "2do Cuatrimestre",
+    "Anual"
+  ) [not null, default: "1er Cuatrimestre"]
+  estado_cursada enum(
+    "cursando",
+    "regular",
+    "libre",
+    "promocionado",
+    "aprobado"
+  ) [default: "cursando"]
+  fecha_inscripcion timestamp [default: `CURRENT_TIMESTAMP`]
+  fecha_registro_estado datetime
+  fecha_vencimiento_estado date
+
+  indexes {
+    (id_estudiante, id_materia, ciclo_lectivo) [unique]
+  }
+}
+
+Table evaluaciones {
+  id_evaluacion int [pk, increment]
+  id_materia int [not null]
+  id_asignacion int [not null]
+  ciclo_lectivo int [not null]
+  periodo enum(
+    "1er Cuatrimestre",
+    "2do Cuatrimestre",
+    "Anual"
+  ) [not null]
+  tipo_evaluacion enum(
+    "Parcial",
+    "Recuperatorio",
+    "Examen Final",
+    "Trabajo Práctico",
+    "Coloquio"
+  ) [not null]
+  numero_instancia int [not null, default: 1]
+  id_evaluacion_origen int
+  fecha_evaluacion date [not null]
+  descripcion varchar(255)
+  estado enum(
+    "programada",
+    "realizada",
+    "cancelada"
+  ) [not null, default: "programada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_materia, ciclo_lectivo, periodo, tipo_evaluacion, numero_instancia) [unique]
+  }
+}
+
+Table calificaciones {
+  id_calificacion int [pk, increment]
+  id_cursada int [not null]
+  id_evaluacion int [not null]
+  estado enum(
+    "pendiente",
+    "presente",
+    "ausente",
+    "impugnada"
+  ) [not null, default: "pendiente"]
+  nota decimal(4,2)
+  observaciones varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_cursada, id_evaluacion) [unique]
+  }
+}
+
+Table correlatividades {
+  id_correlatividad int [pk, increment]
+  id_plan_estudio int [not null]
+  id_materia int [not null]
+  id_materia_correlativa int [not null]
+  contexto_requisito enum("cursada", "final") [not null, default: "cursada"]
+  tipo_requisito enum(
+    "Cursada aprobada",
+    "Acreditada"
+  ) [not null, default: "Cursada aprobada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (
+      id_plan_estudio,
+      id_materia,
+      id_materia_correlativa,
+      contexto_requisito
+    ) [unique]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 5: DOCENTES, CLASES Y ASISTENCIA
+// ============================================================
+
+Table docentes {
+  id_docente int [pk, increment]
+  id_usuario int [not null, unique]
+  legajo_docente varchar(30) [not null, unique]
+  titulo_academico varchar(100)
+  estado enum("activo", "inactivo", "licencia") [default: "activo"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table asignaciones_docentes {
+  id_asignacion int [pk, increment]
+  id_docente int [not null]
+  id_materia int [not null]
+  ciclo_lectivo int [not null]
+  periodo enum(
+    "1er Cuatrimestre",
+    "2do Cuatrimestre",
+    "Anual"
+  ) [not null]
+  rol_docente enum(
+    "Titular",
+    "Adjunto",
+    "JTP",
+    "Auxiliar"
+  ) [default: "Titular"]
+  fecha_asignacion timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_docente, id_materia, ciclo_lectivo, periodo) [unique]
+  }
+}
+
+Table justificaciones_inasistencia {
+  id_justificacion int [pk, increment]
+  id_estudiante int [not null]
+  id_usuario_administrativo int [not null]
+  fecha_inicio date [not null]
+  fecha_fin date [not null]
+  motivo enum(
+    "Salud",
+    "Atención familiar",
+    "Laboral",
+    "Trámite oficial",
+    "Otro"
+  ) [not null]
+  observaciones text
+  estado enum(
+    "Aprobada",
+    "Pendiente",
+    "Rechazada"
+  ) [default: "Aprobada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table clases {
+  id_clase int [pk, increment]
+  id_materia int [not null]
+  id_docente int [not null]
+  ciclo_lectivo int [not null]
+  fecha date [not null]
+  tema_tratado varchar(255)
+  estado enum(
+    "dictada",
+    "cancelada",
+    "reprogramada"
+  ) [default: "dictada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table asistencias {
+  id_asistencia int [pk, increment]
+  id_clase int [not null]
+  id_estudiante int [not null]
+  estado enum(
+    "Presente",
+    "Ausente",
+    "Inasistencia Justificada"
+  ) [not null, default: "Presente"]
+  id_justificacion int
+  observaciones varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_clase, id_estudiante) [unique]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 8: CONSTANCIAS ESTUDIANTILES
+// ============================================================
+
+Table constancias_estudiantes {
+  id_constancia int [pk, increment]
+  id_estudiante int [not null]
+  tipo_constancia enum(
+    "Alumno Regular",
+    "Examen Rendido",
+    "Materias Aprobadas",
+    "Analitico Parcial",
+    "Inscripcion a Carrera",
+    "Finalizacion de Estudios",
+    "Otro"
+  ) [not null]
+  codigo_verificacion varchar(64) [not null, unique]
+  nombre_archivo varchar(255) [not null]
+  ruta_archivo varchar(255) [not null]
+  estado enum(
+    "emitida",
+    "entregada",
+    "anulada"
+  ) [default: "entregada"]
+  observaciones text
+  id_usuario_emisor int
+  fecha_emision datetime [default: `CURRENT_TIMESTAMP`]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+
+// ============================================================
+// MÓDULO 9: ACTAS ACADÉMICAS Y FIRMA DIGITAL
+// ============================================================
+
+Table acta_firmantes {
+  id_firmante int [pk, increment]
+  id_usuario int [not null]
+  cargo_oficial varchar(150) [not null]
+  algoritmo enum(
+    "RSA-2048",
+    "RSA-4096",
+    "ECDSA-P256"
+  ) [not null, default: "RSA-2048"]
+  clave_publica_pem text [not null]
+  huella_clave varchar(64) [not null, unique]
+  certificado_x509_pem text
+  emitido_por varchar(255)
+  valido_desde datetime [not null]
+  valido_hasta datetime
+  estado enum(
+    "activo",
+    "revocado",
+    "vencido"
+  ) [default: "activo"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table acta_requisitos_firma {
+  id_requisito int [pk, increment]
+  tipo_acta enum(
+    "Examen Final",
+    "Cursada",
+    "Analitico",
+    "Habilitacion"
+  ) [not null]
+  orden int [not null]
+  descripcion_rol varchar(100) [not null]
+  es_obligatoria boolean [not null, default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (tipo_acta, orden) [unique]
+  }
+}
+
+Table actas {
+  id_acta int [pk, increment]
+  id_estudiante int [not null]
+  tipo_acta enum(
+    "Examen Final",
+    "Cursada",
+    "Analitico",
+    "Habilitacion"
+  ) [not null]
+  numero_acta varchar(30) [not null, unique]
+  ciclo_lectivo int [not null]
+  id_materia int
+  id_cursada int
+
+  contenido_json json [not null]
+  hash_sha256 char(64) [not null]
+
+  estado enum(
+    "borrador",
+    "firmada",
+    "anulada",
+    "reemplazada"
+  ) [not null, default: "borrador"]
+
+  id_acta_origen int
+  motivo_correccion text
+
+  id_usuario_creador int [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table acta_firmas {
+  id_firma int [pk, increment]
+  id_acta int [not null]
+  id_firmante int [not null]
+  id_requisito int
+  orden_firma int [not null]
+
+  hash_firmado char(64) [not null]
+  firma_digital_b64 text [not null]
+  algoritmo_usado enum(
+    "RSA-2048",
+    "RSA-4096",
+    "ECDSA-P256"
+  ) [not null]
+
+  timestamp_firma datetime [not null]
+  ip_origen varchar(45)
+  metadatos_extra json
+
+  indexes {
+    (id_acta, id_firmante) [unique]
+  }
+}
+
+Table acta_historial {
+  id_evento int [pk, increment]
+  id_acta int [not null]
+  accion enum(
+    "creacion",
+    "firma",
+    "anulacion",
+    "reemplazo",
+    "reimpresion",
+    "descarga",
+    "verificacion_externa"
+  ) [not null]
+  id_usuario_actor int
+  descripcion text
+  datos_snapshot json
+  ip_origen varchar(45)
+  user_agent varchar(500)
+  timestamp_evento datetime [not null, default: `CURRENT_TIMESTAMP`]
+  hash_evento char(64)
+}
+
+
+// ============================================================
+// RELACIONES
+// ============================================================
+
+// --- Autenticación ---
+
+Ref: usuarios.id_rol > roles.id_rol
+Ref: usuario_roles.id_usuario > usuarios.id_usuario
+Ref: usuario_roles.id_rol > roles.id_rol
+
+
+// --- Estructura académica ---
+
+Ref: planes_estudio.id_carrera > carreras.id_carrera
+
+Ref: materias.id_carrera > carreras.id_carrera
+
+Ref: plan_materias.id_plan_estudio > planes_estudio.id_plan_estudio
+Ref: plan_materias.id_materia > materias.id_materia
+
+Ref: periodo_carrera_planes.id_periodo_inscripcion > periodos_inscripcion.id_periodo_inscripcion
+Ref: periodo_carrera_planes.id_carrera > carreras.id_carrera
+Ref: periodo_carrera_planes.id_plan_estudio > planes_estudio.id_plan_estudio
+
+
+// --- Estudiantes / inscripción ---
+
+Ref: estudiantes.id_usuario - usuarios.id_usuario
+Ref: estudiantes.id_carrera > carreras.id_carrera
+Ref: estudiantes.id_plan_estudio > planes_estudio.id_plan_estudio
+
+Ref: preinscripciones.id_periodo_carrera_plan > periodo_carrera_planes.id_periodo_carrera_plan
+Ref: preinscripciones.id_usuario > usuarios.id_usuario
+Ref: preinscripciones.id_estudiante > estudiantes.id_estudiante
+Ref: preinscripciones.id_usuario_revisor > usuarios.id_usuario
+
+Ref: documentos_estudiantes.id_estudiante > estudiantes.id_estudiante
+Ref: documentos_estudiantes.id_preinscripcion > preinscripciones.id_preinscripcion
+Ref: documentos_estudiantes.id_usuario_verificador > usuarios.id_usuario
+
+Ref: historial_cambios_plan.id_estudiante > estudiantes.id_estudiante
+Ref: historial_cambios_plan.id_plan_anterior > planes_estudio.id_plan_estudio
+Ref: historial_cambios_plan.id_plan_nuevo > planes_estudio.id_plan_estudio
+
+Ref: configuraciones_cursada.id_materia > materias.id_materia
+
+
+// --- Cursadas / evaluaciones ---
+
+Ref: cursadas.id_estudiante > estudiantes.id_estudiante
+Ref: cursadas.id_materia > materias.id_materia
+Ref: cursadas.id_plan_estudio > planes_estudio.id_plan_estudio
+
+Ref: evaluaciones.id_materia > materias.id_materia
+Ref: evaluaciones.id_asignacion > asignaciones_docentes.id_asignacion
+Ref: evaluaciones.id_evaluacion_origen > evaluaciones.id_evaluacion
+
+Ref: calificaciones.id_cursada > cursadas.id_cursada
+Ref: calificaciones.id_evaluacion > evaluaciones.id_evaluacion
+
+Ref: correlatividades.id_plan_estudio > planes_estudio.id_plan_estudio
+Ref: correlatividades.id_materia > materias.id_materia
+Ref: correlatividades.id_materia_correlativa > materias.id_materia
+
+
+// --- Docentes / clases / asistencia ---
+
+Ref: docentes.id_usuario - usuarios.id_usuario
+
+Ref: asignaciones_docentes.id_docente > docentes.id_docente
+Ref: asignaciones_docentes.id_materia > materias.id_materia
+
+Ref: justificaciones_inasistencia.id_estudiante > estudiantes.id_estudiante
+Ref: justificaciones_inasistencia.id_usuario_administrativo > usuarios.id_usuario
+
+Ref: clases.id_materia > materias.id_materia
+Ref: clases.id_docente > docentes.id_docente
+
+Ref: asistencias.id_clase > clases.id_clase
+Ref: asistencias.id_estudiante > estudiantes.id_estudiante
+Ref: asistencias.id_justificacion > justificaciones_inasistencia.id_justificacion
+
+
+// --- Constancias ---
+
+Ref: constancias_estudiantes.id_estudiante > estudiantes.id_estudiante
+Ref: constancias_estudiantes.id_usuario_emisor > usuarios.id_usuario
+
+
+// --- Actas / firma digital ---
+
+Ref: acta_firmantes.id_usuario > usuarios.id_usuario
+
+Ref: actas.id_estudiante > estudiantes.id_estudiante
+Ref: actas.id_materia > materias.id_materia
+Ref: actas.id_cursada > cursadas.id_cursada
+Ref: actas.id_acta_origen > actas.id_acta
+Ref: actas.id_usuario_creador > usuarios.id_usuario
+
+Ref: acta_firmas.id_acta > actas.id_acta
+Ref: acta_firmas.id_firmante > acta_firmantes.id_firmante
+Ref: acta_firmas.id_requisito > acta_requisitos_firma.id_requisito
+
+Ref: acta_historial.id_acta > actas.id_acta
+Ref: acta_historial.id_usuario_actor > usuarios.id_usuario
+
+Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
