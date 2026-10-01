@@ -153,8 +153,24 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .k.uq { color: var(--faint); }
 
 /* Controles flotantes del lienzo */
-.hint { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); padding: 7px 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--muted); font-size: 12.5px; white-space: nowrap; pointer-events: none; transition: opacity .3s; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
-.legend { position: absolute; left: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 3px; padding: 8px 10px; font-size: 11.5px !important; border-radius: 10px; background: color-mix(in srgb, var(--card) 92%, transparent); border: 1px solid var(--line); font-size: 12px; color: var(--muted); box-shadow: var(--shadow); }
+.layouts { position: absolute; left: 14px; top: 14px; z-index: 6; display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.layouts > span { padding: 0 8px 0 6px; font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); }
+.layouts button { display: grid; gap: 0; justify-items: start; padding: 4px 10px; border: 0; border-radius: 7px; background: none; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--muted); line-height: 1.3; }
+.layouts button small { font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.layouts button:hover { background: var(--panel); color: var(--ink); }
+.layouts button[aria-checked="true"] { background: var(--ink); color: var(--card); }
+.layouts button[aria-checked="true"] small { color: color-mix(in srgb, var(--card) 70%, transparent); }
+.lvl text { fill: var(--muted); font: 600 13px var(--sans); letter-spacing: .06em; text-transform: uppercase; }
+.lvl text.sub { fill: var(--faint); font: 400 12px var(--sans); letter-spacing: 0; text-transform: none; }
+.lvl line { stroke: var(--line); stroke-dasharray: 3 5; }
+.legend-btn { width: auto !important; padding: 0 8px; font-size: 12px; color: var(--muted); gap: 4px; display: inline-flex !important; align-items: center; }
+.legend-btn[aria-expanded="true"] { background: var(--panel); color: var(--ink); }
+.zoom button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.zoom .sep { width: 1px; min-width: 0; height: 20px; background: var(--line); }
+.stage.has-drawer .zoom, .stage.has-drawer .legend { right: 454px; }
+@media (max-width: 820px) { .stage.has-drawer .zoom, .stage.has-drawer .legend { right: 14px; } }
+.hint { position: absolute; right: 14px; top: 14px; padding: 7px 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--muted); font-size: 12.5px; white-space: nowrap; pointer-events: none; transition: opacity .3s; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
+.legend { position: absolute; right: 14px; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); z-index: 7; display: grid; gap: 3px; padding: 8px 10px; font-size: 11.5px !important; border-radius: 10px; background: color-mix(in srgb, var(--card) 92%, transparent); border: 1px solid var(--line); font-size: 12px; color: var(--muted); box-shadow: var(--shadow); }
 .legend div { display: flex; align-items: center; gap: 8px; }
 .legend svg { width: 36px; height: 14px; color: var(--ink); flex: none; }
 .zoom { position: absolute; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 4px; align-items: center; padding: 4px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
@@ -226,7 +242,9 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
   .app.side-open .side { transform: none; }
   .only-mobile { display: inline-flex; }
   .brand span, .bar .hide-sm { display: none; }
-  .legend { display: none; }
+  .hint { display: none; }
+  .layouts > span { display: none; }
+  .layouts button { padding: 4px 8px; font-size: 12px; }
   .drawer { top: auto; height: 72%; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; }
   .drawer.closed { transform: translateY(105%); }
   .tour { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
@@ -257,7 +275,7 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
         <button role="tab" data-tab="notes" aria-selected="false">Revisión<span class="n" id="n-notes"></span></button>
       </div>
       <div class="list" id="list"></div>
-      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Ctrl + rueda o pellizco para el zoom.</div>
+      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Doble clic en una tabla o en un módulo para acercarte; doble clic en el fondo para ver todo. Ctrl + rueda o pellizco para el zoom; teclas 1–7 para ir a cada módulo.</div>
     </aside>
 
     <main class="stage" id="stage" aria-label="Diagrama del modelo de datos">
@@ -266,9 +284,15 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
         <div id="nodes"></div>
       </div>
 
-      <div class="hint" id="hint">Tocá una tabla para ver con qué se conecta, o seguí un recorrido guiado.</div>
+      <div class="hint" id="hint">Tocá una tabla para ver sus conexiones · doble clic para acercarte a ella</div>
 
-      <div class="legend" id="legend" aria-label="Referencias">
+      <div class="layouts" id="layouts" role="radiogroup" aria-label="Orden de las tablas"><span>Orden</span>
+        <button role="radio" data-l="organico" title="Las tablas conectadas se atraen y las demás se separan">Orgánico<small></small></button>
+        <button role="radio" data-l="niveles" title="Cada tabla a la derecha de las tablas a las que apunta">Por dependencia<small></small></button>
+        <button role="radio" data-l="modulos" title="Una columna por grupo de módulos">Por módulo<small></small></button>
+      </div>
+
+      <div class="legend" id="legend" aria-label="Referencias" hidden>
         <div><svg viewBox="0 0 44 14"><path d="M2 7h40M2 7l10-5M2 7l10 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>muchos</div>
         <div><svg viewBox="0 0 44 14"><path d="M2 7h40M34 2v10M38 2v10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>exactamente uno</div>
         <div><svg viewBox="0 0 44 14"><path d="M2 7h40M38 2v10" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="30" cy="7" r="3.5" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/></svg>uno o ninguno</div>
@@ -279,8 +303,12 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
         <button id="z-out" aria-label="Alejar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
         <span id="z-val">100%</span>
         <button id="z-in" aria-label="Acercar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <span class="sep"></span>
+        <button id="z-follow" aria-pressed="false" aria-label="Zoom automático" title="Zoom automático: al elegir una tabla, acercarse a ella y a sus conexiones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M11 8v6M8 11h6"/></svg></button>
         <button id="z-fit" aria-label="Ver todo" title="Ver todo (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/></svg></button>
-        <button id="z-reset" aria-label="Reacomodar" title="Volver al orden original"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
+        <button id="z-reset" aria-label="Reacomodar" title="Volver al orden calculado (descarta lo que moviste a mano)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
+        <span class="sep"></span>
+        <button class="legend-btn" id="legend-btn" aria-expanded="false" aria-controls="legend">Referencias</button>
       </div>
 
       <section class="tour" id="tour" hidden aria-live="polite"></section>
@@ -1275,12 +1303,13 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
     buildNotes();
     renderHeader();
     buildNodes();
-    var saved = store('siga-mapa:' + sig);
-    S.pos = {};
-    defaultLayout();
-    if (saved) Object.keys(saved).forEach(function (k) { if (S.pos[k]) S.pos[k] = saved[k]; });
+    buildNeighbors();
+    S.layout = store('siga-mapa-layout') || 'organico';
+    if (!LAYOUTS[S.layout]) S.layout = 'organico';
+    S.pos = layoutPositions(S.layout, false);
     placeNodes();
     drawWires();
+    countAll();
     renderList();
     closeDrawer();
     $('tour').hidden = true;
@@ -1339,33 +1368,271 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
 
   var W = 252, COL_GAP = 150, TBL_GAP = 20, MOD_GAP = 70, HEAD = 46;
 
-  function defaultLayout() {
-    var cols = [], nextCol = 5;
-    M.modules.forEach(function (md) {
-      var c = MOD_COLUMN[md.num];
-      if (c == null) c = nextCol++;
-      (cols[c] = cols[c] || []).push(md);
-    });
-    cols = cols.filter(Boolean);
-    var heights = cols.map(function (mods) {
-      return mods.reduce(function (h, md, i) {
-        return h + (i ? MOD_GAP : 0) + HEAD + md.tables.reduce(function (s, t, j) { return s + (j ? TBL_GAP : 0) + cardEl[t.name].offsetHeight; }, 0);
-      }, 0);
-    });
-    var maxH = Math.max.apply(null, heights);
-    cols.forEach(function (mods, ci) {
-      var x = ci * (W + COL_GAP), y = (maxH - heights[ci]) / 2;
-      mods.forEach(function (md, mi) {
-        if (mi) y += MOD_GAP;
-        y += HEAD;
-        md.tables.forEach(function (t, j) {
-          if (j) y += TBL_GAP;
-          S.pos[t.name] = { x: x, y: Math.round(y) };
-          y += cardEl[t.name].offsetHeight;
-        });
-      });
+  var NB = {}, LV = null;
+  function buildNeighbors() {
+    NB = {}; M.order.forEach(function (t) { NB[t.name] = []; });
+    M.refs.forEach(function (r) {
+      if (r.from.t === r.to.t) return;
+      if (NB[r.from.t].indexOf(r.to.t) < 0) NB[r.from.t].push(r.to.t);
+      if (NB[r.to.t].indexOf(r.from.t) < 0) NB[r.to.t].push(r.from.t);
     });
   }
+  function H(n) { return cardEl[n].offsetHeight; }
+  function avg(a) { return a.reduce(function (s, x) { return s + x; }, 0) / a.length; }
+
+  // 1) Por módulo: una columna por grupo de módulos; dentro de cada módulo, las tablas se ordenan
+  //    según la altura de sus vecinas para que las líneas se crucen menos.
+  function layoutModules() {
+    var cols = [], nextCol = 5, order = {};
+    M.modules.forEach(function (md) {
+      var c = MOD_COLUMN[md.num]; if (c == null) c = nextCol++;
+      (cols[c] = cols[c] || []).push(md);
+      order[md.name] = md.tables.map(function (t) { return t.name; });
+    });
+    cols = cols.filter(Boolean);
+    function stack() {
+      var P = {};
+      var heights = cols.map(function (mods) {
+        return mods.reduce(function (h, md, i) { return h + (i ? MOD_GAP : 0) + HEAD + order[md.name].reduce(function (s, n, j) { return s + (j ? TBL_GAP : 0) + H(n); }, 0); }, 0);
+      });
+      var maxH = Math.max.apply(null, heights);
+      cols.forEach(function (mods, ci) {
+        var x = ci * (W + COL_GAP), y = (maxH - heights[ci]) / 2;
+        mods.forEach(function (md, mi) {
+          if (mi) y += MOD_GAP; y += HEAD;
+          order[md.name].forEach(function (n, j) { if (j) y += TBL_GAP; P[n] = { x: x, y: Math.round(y) }; y += H(n); });
+        });
+      });
+      return P;
+    }
+    var P = stack();
+    for (var it = 0; it < 4; it++) {
+      M.modules.forEach(function (md) {
+        var key = {};
+        order[md.name].forEach(function (n) { var ns = NB[n]; key[n] = ns.length ? avg(ns.map(function (m) { return P[m].y + H(m) / 2; })) : P[n].y; });
+        order[md.name].sort(function (x, y) { return key[x] - key[y]; });
+      });
+      P = stack();
+    }
+    LV = null;
+    return P;
+  }
+
+  // 2) Por dependencia: cada tabla queda a la derecha de las tablas a las que apunta.
+  //    Niveles por camino más largo, orden por baricentro y alineación vertical con las vecinas.
+  function layoutLevels() {
+    var names = M.order.map(function (t) { return t.name; }), out = {}, inn = {}, L = {}, vis = {};
+    names.forEach(function (n) { out[n] = []; inn[n] = []; });
+    M.refs.forEach(function (r) {
+      if (r.from.t === r.to.t) return;
+      if (out[r.from.t].indexOf(r.to.t) < 0) out[r.from.t].push(r.to.t);
+      if (inn[r.to.t].indexOf(r.from.t) < 0) inn[r.to.t].push(r.from.t);
+    });
+    function lay(n) {
+      if (L[n] != null) return L[n];
+      if (vis[n]) return 0;
+      vis[n] = 1; var v = 0;
+      out[n].forEach(function (p) { v = Math.max(v, lay(p) + 1); });
+      return (L[n] = v);
+    }
+    names.forEach(lay);
+    // acercar cada tabla a las que dependen de ella (acorta las líneas largas)
+    for (var k = 0; k < names.length; k++) {
+      var changed = false;
+      names.forEach(function (n) {
+        if (!inn[n].length) return;
+        var m = Math.min.apply(null, inn[n].map(function (c) { return L[c]; })) - 1;
+        if (m > L[n]) { L[n] = m; changed = true; }
+      });
+      if (!changed) break;
+    }
+    var maxL = Math.max.apply(null, names.map(function (n) { return L[n]; })), layers = [];
+    for (var i = 0; i <= maxL; i++) layers.push([]);
+    names.forEach(function (n) { layers[L[n]].push(n); });
+    function idx(n) { var a = layers[L[n]]; return (a.indexOf(n) + 0.5) / a.length; }
+    for (var it = 0; it < 16; it++) {
+      var fwd = it % 2 === 0, seq = layers.map(function (_, j) { return j; });
+      if (!fwd) seq.reverse();
+      seq.forEach(function (li) {
+        var a = layers[li], key = {};
+        a.forEach(function (n, j) {
+          var ns = NB[n].filter(function (m) { return fwd ? L[m] < li : L[m] > li; });
+          if (!ns.length) ns = NB[n];
+          key[n] = ns.length ? avg(ns.map(idx)) : (j + 0.5) / a.length;
+        });
+        a.sort(function (x, y) { return key[x] - key[y]; });
+      });
+    }
+    var GAP = 30, DX = W + 170, P = {};
+    var colH = layers.map(function (a) { return a.reduce(function (s, n, j) { return s + H(n) + (j ? GAP : 0); }, 0); });
+    var maxH = Math.max.apply(null, colH);
+    layers.forEach(function (a, li) { var y = (maxH - colH[li]) / 2; a.forEach(function (n) { P[n] = { x: li * DX, y: y }; y += H(n) + GAP; }); });
+    for (it = 0; it < 10; it++) {
+      layers.forEach(function (a) {
+        var des = a.map(function (n) { var ns = NB[n]; return ns.length ? avg(ns.map(function (m) { return P[m].y + H(m) / 2; })) - H(n) / 2 : P[n].y; });
+        var A = [], B = [], j;
+        for (j = 0; j < a.length; j++) A[j] = j ? Math.max(des[j], A[j - 1] + H(a[j - 1]) + GAP) : des[j];
+        for (j = a.length - 1; j >= 0; j--) B[j] = j < a.length - 1 ? Math.min(des[j], B[j + 1] - GAP - H(a[j])) : des[j];
+        var Y = a.map(function (_, q) { return (A[q] + B[q]) / 2; });
+        for (j = 1; j < a.length; j++) Y[j] = Math.max(Y[j], Y[j - 1] + H(a[j - 1]) + GAP);
+        a.forEach(function (n, q) { P[n].y = Y[q]; });
+      });
+    }
+    names.forEach(function (n) { P[n].y = Math.round(P[n].y); });
+    LV = { xs: layers.map(function (_, li) { return li * DX; }), n: layers.length };
+    return P;
+  }
+
+  // 3) Orgánico: simulación de fuerzas. Las tablas relacionadas se atraen, todas se repelen
+  //    y cada módulo tiende a quedar junto. Se prueban varios arranques y se queda el de menos cruces.
+  function layoutOrganic() {
+    var names = M.order.map(function (t) { return t.name; });
+    var edges = [];
+    names.forEach(function (n) { NB[n].forEach(function (m) { if (n < m) edges.push([n, m]); }); });
+    var best = null, bestX = Infinity;
+    for (var seed = 0; seed < 4; seed++) {
+      var P = simulate(seed);
+      var keep = S.pos; S.pos = P;
+      var x = countCrossings();
+      S.pos = keep;
+      if (x < bestX) { bestX = x; best = P; }
+    }
+    LV = null;
+    return best;
+
+    function simulate(seed) {
+      var C = {}, mods = M.modules.filter(function (md) { return md.tables.length; });
+      mods.forEach(function (md, mi) {
+        var ang = (mi / mods.length + seed * 0.13) * Math.PI * 2;
+        var cx = Math.cos(ang) * 650, cy = Math.sin(ang) * 450;
+        md.tables.forEach(function (t, j) {
+          var b = j / md.tables.length * Math.PI * 2 + seed;
+          C[t.name] = { x: cx + Math.cos(b) * 170, y: cy + Math.sin(b) * 170 };
+        });
+      });
+      var N = names.length, iters = 450;
+      for (var it = 0; it < iters; it++) {
+        var temp = 60 * (1 - it / iters) + 3, F = {};
+        names.forEach(function (n) { F[n] = { x: 0, y: 0 }; });
+        for (var i = 0; i < N; i++) for (var j = i + 1; j < N; j++) {
+          var a = names[i], b2 = names[j], dx = C[a].x - C[b2].x, dy = C[a].y - C[b2].y;
+          var d2 = Math.max(dx * dx + dy * dy, 400), d = Math.sqrt(d2), f = 260000 / d2;
+          F[a].x += f * dx / d; F[a].y += f * dy / d; F[b2].x -= f * dx / d; F[b2].y -= f * dy / d;
+        }
+        edges.forEach(function (e) {
+          var a = C[e[0]], b3 = C[e[1]], dx = b3.x - a.x, dy = b3.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1, f = (d - 360) * 0.06;
+          F[e[0]].x += f * dx / d; F[e[0]].y += f * dy / d; F[e[1]].x -= f * dx / d; F[e[1]].y -= f * dy / d;
+        });
+        mods.forEach(function (md) {
+          var cx = avg(md.tables.map(function (t) { return C[t.name].x; })), cy = avg(md.tables.map(function (t) { return C[t.name].y; }));
+          md.tables.forEach(function (t) { F[t.name].x += (cx - C[t.name].x) * 0.04; F[t.name].y += (cy - C[t.name].y) * 0.04; });
+        });
+        names.forEach(function (n) {
+          F[n].x -= C[n].x * 0.004; F[n].y -= C[n].y * 0.006;
+          var m = Math.sqrt(F[n].x * F[n].x + F[n].y * F[n].y) || 1, s2 = Math.min(m, temp) / m;
+          C[n].x += F[n].x * s2; C[n].y += F[n].y * s2;
+        });
+      }
+      // quitar superposiciones
+      for (var k = 0; k < 300; k++) {
+        var moved = false;
+        for (var i2 = 0; i2 < N; i2++) for (var j2 = i2 + 1; j2 < N; j2++) {
+          var p = names[i2], q = names[j2], dx2 = C[q].x - C[p].x, dy2 = C[q].y - C[p].y;
+          var ox = (cardEl[p].offsetWidth + cardEl[q].offsetWidth) / 2 + 70 - Math.abs(dx2);
+          var oy = (H(p) + H(q)) / 2 + 40 - Math.abs(dy2);
+          if (ox > 0 && oy > 0) {
+            moved = true;
+            if (ox / 1.6 < oy) { var sx = (dx2 >= 0 ? 1 : -1) * ox / 2; C[p].x -= sx; C[q].x += sx; }
+            else { var sy = (dy2 >= 0 ? 1 : -1) * oy / 2; C[p].y -= sy; C[q].y += sy; }
+          }
+        }
+        if (!moved) break;
+      }
+      var R = {};
+      names.forEach(function (n) { R[n] = { x: Math.round(C[n].x - cardEl[n].offsetWidth / 2), y: Math.round(C[n].y - H(n) / 2) }; });
+      return R;
+    }
+  }
+
+  var LAYOUTS = { niveles: layoutLevels, modulos: layoutModules, organico: layoutOrganic };
+  function layoutKey(kind) { return 'siga-mapa:' + kind + ':' + sig; }
+  function layoutPositions(kind, fresh) {
+    var P = LAYOUTS[kind]();
+    if (!fresh && !S.all) { var saved = store(layoutKey(kind)); if (saved) Object.keys(saved).forEach(function (k) { if (P[k]) P[k] = saved[k]; }); }
+    return P;
+  }
+
+  // Cruces: se muestrea cada curva y se cuentan intersecciones entre líneas que no comparten tabla.
+  function countCrossings() {
+    var segs = [];
+    M.refs.forEach(function (r) {
+      if (r.from.t === r.to.t) return;
+      var c = edgeGeom(r).c, prev = null;
+      for (var i = 0; i <= 12; i++) {
+        var t = i / 12, u = 1 - t;
+        var x = u * u * u * c[0] + 3 * u * u * t * c[2] + 3 * u * t * t * c[4] + t * t * t * c[6];
+        var y = u * u * u * c[1] + 3 * u * u * t * c[3] + 3 * u * t * t * c[5] + t * t * t * c[7];
+        if (prev) segs.push({ a: prev, b: [x, y], r: r });
+        prev = [x, y];
+      }
+    });
+    function cr(p, q, r2) { return (q[0] - p[0]) * (r2[1] - p[1]) - (q[1] - p[1]) * (r2[0] - p[0]); }
+    var seen = {}, n = 0;
+    for (var i = 0; i < segs.length; i++) for (var j = i + 1; j < segs.length; j++) {
+      var s1 = segs[i], s2 = segs[j], r1 = s1.r, r2 = s2.r;
+      if (r1 === r2 || r1.from.t === r2.from.t || r1.from.t === r2.to.t || r1.to.t === r2.from.t || r1.to.t === r2.to.t) continue;
+      var key = r1.id < r2.id ? r1.id + '-' + r2.id : r2.id + '-' + r1.id;
+      if (seen[key]) continue;
+      var d1 = cr(s2.a, s2.b, s1.a), d2 = cr(s2.a, s2.b, s1.b), d3 = cr(s1.a, s1.b, s2.a), d4 = cr(s1.a, s1.b, s2.b);
+      if (((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0))) { seen[key] = 1; n++; }
+    }
+    return n;
+  }
+  var COUNTS = {};
+  function countAll() {
+    var keep = S.pos, keepLV = LV;
+    Object.keys(LAYOUTS).forEach(function (k) {
+      S.pos = k === S.layout ? keep : layoutPositions(k, false);
+      COUNTS[k] = countCrossings();
+    });
+    S.pos = keep; LV = keepLV;
+    renderLayoutButtons();
+  }
+  function renderLayoutButtons() {
+    document.querySelectorAll('#layouts button').forEach(function (b) {
+      b.setAttribute('aria-checked', b.dataset.l === S.layout);
+      var n = COUNTS[b.dataset.l];
+      b.querySelector('small').textContent = n == null ? '' : n === 1 ? '1 cruce' : n + ' cruces';
+    });
+  }
+
+  function animateTo(P, done) {
+    var from = {}, names = Object.keys(P);
+    names.forEach(function (n) { from[n] = S.pos[n] || P[n]; });
+    var keep = S.pos; S.pos = P; var v1 = fitView(null); S.pos = keep;
+    var v0 = { x: S.view.x, y: S.view.y, s: S.view.s }, t0 = performance.now(), dur = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 650;
+    (function frame(now) {
+      var k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      var cur = {};
+      names.forEach(function (n) { cur[n] = { x: from[n].x + (P[n].x - from[n].x) * e, y: from[n].y + (P[n].y - from[n].y) * e }; });
+      S.pos = cur;
+      S.view = { x: v0.x + (v1.x - v0.x) * e, y: v0.y + (v1.y - v0.y) * e, s: v0.s + (v1.s - v0.s) * e };
+      placeNodes(); drawWires(); applyView(false);
+      if (k < 1) requestAnimationFrame(frame); else { S.pos = P; placeNodes(); drawWires(); if (done) done(); }
+    })(t0);
+  }
+
+  function applyLayout(kind, fresh) {
+    S.layout = kind; store('siga-mapa-layout', kind);
+    var P = layoutPositions(kind, fresh);
+    animateTo(P, function () { COUNTS[kind] = countCrossings(); renderLayoutButtons(); });
+    renderLayoutButtons();
+  }
+  $('layouts').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-l]'); if (!b || b.dataset.l === S.layout) return;
+    if (S.tour) endTour(true);
+    applyLayout(b.dataset.l, false);
+  });
 
   function placeNodes() { M.order.forEach(function (t) { var p = S.pos[t.name]; cardEl[t.name].style.transform = 'translate(' + p.x + 'px,' + p.y + 'px)'; }); }
 
@@ -1377,14 +1644,16 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
 
   function edgeGeom(r) {
     var a = anchor(r.from.t, r.from.c), b = anchor(r.to.t, r.to.c);
-    var ac = a.x + a.w / 2, bc = b.x + b.w / 2, sx, tx, sd, td, d;
+    var ac = a.x + a.w / 2, bc = b.x + b.w / 2, sx, tx, sd, td, d, cc;
     if (r.from.t === r.to.t || Math.abs(ac - bc) < 60) {
       sx = a.x + a.w; tx = b.x + b.w; sd = 1; td = 1;
       var k = 36 + Math.min(70, Math.abs(a.y - b.y) * 0.12);
+      var cc = [sx, a.y, sx + k, a.y, tx + k, b.y, tx, b.y];
       d = 'M' + sx + ',' + a.y + ' C' + (sx + k) + ',' + a.y + ' ' + (tx + k) + ',' + b.y + ' ' + tx + ',' + b.y;
     } else {
       if (bc > ac) { sx = a.x + a.w; tx = b.x; sd = 1; td = -1; } else { sx = a.x; tx = b.x + b.w; sd = -1; td = 1; }
       var k2 = Math.max(50, Math.abs(tx - sx) * 0.45);
+      cc = [sx, a.y, sx + sd * k2, a.y, tx + td * k2, b.y, tx, b.y];
       d = 'M' + sx + ',' + a.y + ' C' + (sx + sd * k2) + ',' + a.y + ' ' + (tx + td * k2) + ',' + b.y + ' ' + tx + ',' + b.y;
     }
     var sy = a.y, ty = b.y, ends = '';
@@ -1395,13 +1664,23 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
     var req = col(M, r.from.t, r.from.c).nn;
     ends += 'M' + (tx + td * 7) + ',' + (ty - 6) + 'v12';
     if (req) ends += 'M' + (tx + td * 12) + ',' + (ty - 6) + 'v12';
-    return { d: d, ends: ends, opt: req ? null : { x: tx + td * 16, y: ty } };
+    return { d: d, c: cc, ends: ends, opt: req ? null : { x: tx + td * 16, y: ty } };
   }
 
   function drawWires() {
     var svg = $('wires'), html = '';
+    if (S.layout === 'niveles' && LV) {
+      var top = Infinity, bot = -Infinity;
+      M.order.forEach(function (t) { top = Math.min(top, S.pos[t.name].y); bot = Math.max(bot, S.pos[t.name].y + H(t.name)); });
+      html += '<g class="lvl"><text class="sub" x="' + LV.xs[0] + '" y="' + (top - 74) + '">← Cada tabla apunta a las tablas que están a su izquierda</text>';
+      LV.xs.forEach(function (x, i) {
+        html += '<text x="' + x + '" y="' + (top - 40) + '">' + (i ? 'Nivel ' + i : 'Base') + '</text>' +
+          '<text class="sub" x="' + x + '" y="' + (top - 22) + '">' + (i ? 'depende de niveles anteriores' : 'no depende de ninguna tabla') + '</text>';
+      });
+      html += '</g>';
+    }
     // regiones de módulo
-    M.modules.forEach(function (md) {
+    if (S.layout === 'modulos') M.modules.forEach(function (md) {
       if (!md.tables.length) return;
       var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       md.tables.forEach(function (t) { var p = S.pos[t.name], el = cardEl[t.name]; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + el.offsetWidth); y1 = Math.max(y1, p.y + el.offsetHeight); });
@@ -1434,6 +1713,14 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
       T[f] = 1;
       M.refs.forEach(function (r) { if (r.from.t === f || r.to.t === f) { E[r.id] = 1; T[r.from.t] = 1; T[r.to.t] = 1; rows.push([r.from.t, r.from.c], [r.to.t, r.to.c]); } });
       return { tables: T, edges: E, rows: rows };
+    }
+    if (S.modFocus) {
+      var md = M.modules.filter(function (x) { return x.name === S.modFocus; })[0];
+      if (md) {
+        md.tables.forEach(function (t) { T[t.name] = 1; });
+        M.refs.forEach(function (r) { if (T[r.from.t] && T[r.to.t]) E[r.id] = 1; });
+        return { tables: T, edges: E, rows: [] };
+      }
     }
     if (S.q) {
       var any = false;
@@ -1484,25 +1771,57 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
     return { w: Math.max(120, w), h: Math.max(120, h), top: top };
   }
   function fitTo(names, anim) {
+    var v = fitView(names); if (!v) return;
+    S.view = v; applyView(anim);
+  }
+  function fitView(names, maxS) {
+    var all = !names;
     names = (names || M.order.map(function (t) { return t.name; })).filter(function (n) { return S.pos[n]; });
-    if (!names.length) return;
+    if (!names.length) return null;
     var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     names.forEach(function (n) { var p = S.pos[n], el = cardEl[n]; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + el.offsetWidth); y1 = Math.max(y1, p.y + el.offsetHeight); });
     var pad = names.length > 1 ? 70 : 120;
     x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+    if (all && S.layout === 'niveles') y0 -= 80;
     var a = freeArea();
-    var s = Math.min(a.w / (x1 - x0), a.h / (y1 - y0), names.length > 1 ? 1.1 : 1.2);
+    var s = Math.min(a.w / (x1 - x0), a.h / (y1 - y0), maxS || (names.length > 1 ? 1.1 : 1.3));
     s = Math.max(0.15, s);
-    S.view.s = s;
-    S.view.x = (a.w - (x1 - x0) * s) / 2 - x0 * s;
-    S.view.y = a.top + (a.h - (y1 - y0) * s) / 2 - y0 * s;
-    applyView(anim);
+    return { s: s, x: (a.w - (x1 - x0) * s) / 2 - x0 * s, y: a.top + (a.h - (y1 - y0) * s) / 2 - y0 * s };
   }
+  function fitAnim(names, maxS) { var v = fitView(names, maxS); if (v) { S.view = v; applyView(true); } }
 
   // Punteros: arrastrar lienzo, arrastrar tabla, pellizcar
-  var ptrs = {}, drag = null, pinch = null;
+  var ptrs = {}, drag = null, pinch = null, lastTap = null;
+  function neighborsOf(n) { return [n].concat(NB[n] || []); }
+  // Doble clic en una tabla: primero se acerca a ella; otro doble clic muestra ella con todas sus conexiones.
+  function zoomTable(n) {
+    if (S.sel !== n) select(n, false);
+    if (S.zoomed === n + '*') { S.zoomed = n; fitAnim(neighborsOf(n)); }
+    else { S.zoomed = n + '*'; fitAnim([n], 1.15); }
+  }
+  // Doble clic en el fondo: el módulo bajo el puntero (si lo hay) o todo el diagrama.
+  function zoomPoint(e) {
+    var r = stage.getBoundingClientRect(), wx = (e.clientX - r.left - S.view.x) / S.view.s, wy = (e.clientY - r.top - S.view.y) / S.view.s;
+    S.zoomed = null;
+    if (S.layout === 'modulos') {
+      var hit = M.modules.filter(function (md) {
+        if (!md.tables.length) return false;
+        var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        md.tables.forEach(function (t) { var p = S.pos[t.name]; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + cardEl[t.name].offsetWidth); y1 = Math.max(y1, p.y + H(t.name)); });
+        return wx > x0 - 20 && wx < x1 + 20 && wy > y0 - 44 && wy < y1 + 20;
+      })[0];
+      if (hit) { zoomModule(hit); return; }
+    }
+    fitAnim(null);
+  }
+  function zoomModule(md) {
+    S.sel = null; S.hover = null; S.zoomed = null; closeDrawer(); applyFocus(); renderList();
+    S.modFocus = md.name; applyFocus();
+    fitAnim(md.tables.map(function (t) { return t.name; }));
+    toast(md.name);
+  }
   stage.addEventListener('pointerdown', function (e) {
-    if (e.target.closest('.drawer, .tour, .zoom, .legend')) return;
+    if (e.target.closest('.drawer, .tour, .zoom, .legend, .layouts')) return;
     ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
     stage.setPointerCapture(e.pointerId);
     var ids = Object.keys(ptrs);
@@ -1547,12 +1866,22 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
     if (!drag) return;
     var d = drag; drag = null;
     stage.classList.remove('panning');
+    var dbl = false;
+    if (!d.moved && e.type === 'pointerup') {
+      var now = Date.now();
+      dbl = !!(lastTap && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30 && lastTap.card === d.card);
+      lastTap = dbl ? null : { t: now, x: e.clientX, y: e.clientY, card: d.card };
+    }
     if (d.card) {
       cardEl[d.card].classList.remove('dragging');
-      if (d.moved) { store('siga-mapa:' + sig, S.pos); return; }
+      if (d.moved) { store(layoutKey(S.layout), S.pos); COUNTS[S.layout] = countCrossings(); renderLayoutButtons(); return; }
+      if (dbl) { zoomTable(d.card); return; }
       select(d.card, false); return;
     }
-    if (!d.moved && e.type === 'pointerup') { if (S.tour) return; select(null); }
+    if (!d.moved && e.type === 'pointerup') {
+      if (dbl) { zoomPoint(e); return; }
+      if (S.tour) return; S.modFocus = null; select(null);
+    }
   }
   stage.addEventListener('pointerup', endPtr);
   stage.addEventListener('pointercancel', endPtr);
@@ -1571,12 +1900,15 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
   $('z-in').onclick = function () { var c = center(); zoomAt(c[0], c[1], 1.25, true); };
   $('z-out').onclick = function () { var c = center(); zoomAt(c[0], c[1], 0.8, true); };
   $('z-fit').onclick = function () { fitTo(null, true); };
-  $('z-reset').onclick = function () { S.pos = {}; defaultLayout(); placeNodes(); drawWires(); store('siga-mapa:' + sig, null); fitTo(null, true); toast('Tablas reacomodadas'); };
+  $('z-reset').onclick = function () { store(layoutKey(S.layout), null); applyLayout(S.layout, true); toast('Tablas reacomodadas'); };
+  $('z-follow').onclick = function () { S.follow = !S.follow; this.setAttribute('aria-pressed', S.follow); store('siga-mapa-follow', S.follow); toast(S.follow ? 'Zoom automático activado' : 'Zoom automático desactivado'); };
+  S.follow = !!store('siga-mapa-follow'); $('z-follow').setAttribute('aria-pressed', S.follow);
+  $('legend-btn').onclick = function () { var l = $('legend'); l.hidden = !l.hidden; this.setAttribute('aria-expanded', !l.hidden); };
 
   /* ================== Selección y ficha ================== */
 
   function select(name, pan) {
-    S.sel = name; S.hover = null;
+    S.sel = name; S.hover = null; S.modFocus = null; if (S.zoomed && S.zoomed.replace('*', '') !== name) S.zoomed = null;
     if (S.tour && name) endTour(true);
     if (name) S.touched = true;
     applyFocus(); renderList();
@@ -1584,7 +1916,7 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
     renderDrawer(name);
     var set = [name];
     M.refs.forEach(function (r) { if (r.from.t === name) set.push(r.to.t); if (r.to.t === name) set.push(r.from.t); });
-    if (pan !== false) fitTo(set, true);
+    if (pan !== false || S.follow) { S.zoomed = name; fitTo(set, true); }
     else ensureVisible(set);
   }
   function ensureVisible(set) {
@@ -1593,7 +1925,7 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
     var x = p.x * S.view.s + S.view.x, y = p.y * S.view.s + S.view.y;
     if (x < 0 || y < 0 || x + el.offsetWidth * S.view.s > a.w || y + 40 > a.h) fitTo(set, true);
   }
-  function closeDrawer() { $('drawer').classList.add('closed'); }
+  function closeDrawer() { $('drawer').classList.add('closed'); stage.classList.remove('has-drawer'); }
 
   function role(r) {
     var pk = r.to.c, c = r.from.c;
@@ -1655,7 +1987,7 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
 
     html += '</div>';
     dr.innerHTML = html;
-    dr.classList.remove('closed');
+    dr.classList.remove('closed'); stage.classList.add('has-drawer');
     $('d-close').onclick = function () { select(null); };
     $('d-fit').onclick = function () { var set = [name]; out.forEach(function (r) { set.push(r.to.t); }); inn.forEach(function (r) { set.push(r.from.t); }); fitTo(set, true); };
   }
@@ -1719,9 +2051,7 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
   $('list').addEventListener('click', function (e) {
     var m = e.target.closest('[data-mod]');
     if (m) {
-      var md = M.modules.filter(function (x) { return x.name === m.dataset.mod; })[0];
-      S.sel = null; closeDrawer(); applyFocus(); renderList();
-      fitTo(md.tables.map(function (t) { return t.name; }), true); closeSideMobile(); return;
+      zoomModule(M.modules.filter(function (x) { return x.name === m.dataset.mod; })[0]); closeSideMobile(); return;
     }
     var tr = e.target.closest('[data-tour]');
     if (tr) { startTour(tr.dataset.tour); closeSideMobile(); }
@@ -1734,9 +2064,9 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
   /* ================== Recorridos ================== */
 
   function startTour(id) { S.tour = id; S.step = 0; S.sel = null; S.hover = null; S.touched = true; closeDrawer(); renderTour(); }
-  function endTour(silent) { S.tour = null; $('tour').hidden = true; $('legend').hidden = false; if (!silent) { applyFocus(); fitTo(null, true); } }
+  function endTour(silent) { S.tour = null; $('tour').hidden = true; if (!silent) { applyFocus(); fitTo(null, true); } }
   function renderTour() {
-    $('legend').hidden = true;
+    $('legend').hidden = true; $('legend-btn').setAttribute('aria-expanded', 'false');
     var tr = TOURS.filter(function (x) { return x.id === S.tour; })[0], st = tr.steps[S.step], n = tr.steps.length;
     var text = esc(st[1]).replace(/\{(\w+)\}/g, function (_, t) { return M.tables[t] ? chip(t) : '<code>' + t + '</code>'; });
     var el = $('tour');
@@ -1756,9 +2086,7 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
 
   $('cols-btn').onclick = function () {
     S.all = !S.all; this.setAttribute('aria-pressed', S.all);
-    refreshCards(); S.pos = {}; var saved = store('siga-mapa:' + sig); defaultLayout();
-    if (saved && !S.all) Object.keys(saved).forEach(function (k) { if (S.pos[k]) S.pos[k] = saved[k]; });
-    placeNodes(); drawWires(); fitTo(null, true);
+    refreshCards(); applyLayout(S.layout, S.all); setTimeout(countAll, 700);
   };
   $('load-btn').onclick = function () { $('file').click(); };
   function readFile(f) {
@@ -1781,9 +2109,10 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
 
   document.addEventListener('keydown', function (e) {
     if (e.target.matches('input')) { if (e.key === 'Escape') { e.target.value = ''; e.target.dispatchEvent(new Event('input')); e.target.blur(); } return; }
-    if (e.key === 'Escape') { if (S.tour) endTour(); else if (S.sel) select(null); }
+    if (e.key === 'Escape') { if (S.tour) endTour(); else if (S.sel) select(null); else if (S.modFocus) { S.modFocus = null; applyFocus(); } else if (!$('legend').hidden) $('legend-btn').click(); }
     else if (e.key === '/') { e.preventDefault(); $('q').focus(); }
-    else if (e.key === 'f' || e.key === 'F') fitTo(null, true);
+    else if (e.key === 'f' || e.key === 'F') { S.modFocus = null; applyFocus(); fitTo(null, true); }
+    else if (/^[1-9]$/.test(e.key) && M.modules[+e.key - 1]) zoomModule(M.modules[+e.key - 1]);
     else if (S.tour && e.key === 'ArrowRight') $('t-next').click();
     else if (S.tour && e.key === 'ArrowLeft') $('t-prev').click();
   });
