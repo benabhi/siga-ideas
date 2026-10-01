@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGA Preinscripción</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="assets/siga.css">
+<style>
+  /* Página pública: columna centrada, pensada primero para el celular */
+  .site-head { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .site-head .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+  .narrow { max-width: 760px; }
+  .brand { display: flex; align-items: center; gap: 12px; color: var(--text); text-decoration: none; }
+  .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--navy); color: #fff; }
+  .brand strong { display: block; font-size: 14.5px; line-height: 1.2; }
+  .brand small { display: block; font-size: 11px; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+  .help { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .help strong { color: var(--text); }
+
+  .hero { background: var(--surface); padding-block: 36px 28px; text-align: center; border-bottom: 1px solid var(--border); }
+  .hero h1 { font-size: clamp(26px, 5vw, 34px); font-weight: 800; letter-spacing: -.025em; margin-top: 14px; color: var(--navy); }
+  .hero p { color: var(--muted); max-width: 58ch; margin: 8px auto 0; }
+
+  .steps { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 26px; flex-wrap: wrap; list-style: none; padding: 0; }
+  .steps li { display: flex; align-items: center; gap: 8px; }
+  .steps a { display: flex; align-items: center; gap: 8px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
+  .steps .dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border-strong); font-size: 12px; font-weight: 700; color: var(--muted); background: var(--surface); }
+  .steps .done .dot { background: var(--green); border-color: var(--green); color: #fff; }
+  .steps .current .dot { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .steps .current a { color: var(--text); font-weight: 650; }
+  .steps .done svg.lucide { width: 14px; height: 14px; stroke-width: 3; }
+  .steps .sep { width: 36px; height: 1px; background: var(--border-strong); }
+  @media (max-width: 640px) { .steps .label { display: none; } .steps .current .label { display: inline; } .steps .sep { width: 18px; } }
+
+  main { padding-block: 28px 64px; }
+  form { display: grid; gap: 18px; }
+  .period { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-radius: var(--radius); background: var(--navy); color: #dbe3ef; }
+  .period strong { color: #fff; }
+  .period .live { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: #b6f0cf; }
+  .period .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #46d38a; box-shadow: 0 0 0 4px rgba(70, 211, 138, .2); }
+
+  /* Carreras como tarjetas de selección */
+  .careers { display: grid; gap: 10px; }
+  .career { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--border-strong); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+  .career:hover { border-color: #aebbd0; }
+  .career input { position: absolute; opacity: 0; pointer-events: none; }
+  .career .radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border-strong); display: grid; place-items: center; background: var(--surface); }
+  .career .radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+  .career:has(input:checked) { border-color: var(--navy); background: var(--navy-050); box-shadow: 0 0 0 1px var(--navy); }
+  .career:has(input:checked) .radio { border-color: var(--navy); }
+  .career:has(input:checked) .radio::after { background: var(--navy); }
+  .career:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .career strong { display: block; font-size: 14px; }
+  .career small { color: var(--muted); font-size: 12.5px; }
+  .seats { font-size: 12px; font-weight: 600; text-align: right; white-space: nowrap; }
+  @media (max-width: 560px) { .career { grid-template-columns: auto minmax(0, 1fr); } .seats { grid-column: 2; text-align: left; } }
+
+  /* Carga de archivos */
+  .files { display: grid; gap: 10px; }
+  .file { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: 10px; background: var(--surface-2); }
+  .file .ico { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+  .file strong { display: block; font-size: 13.5px; }
+  .file small { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file .side { display: flex; align-items: center; gap: 6px; }
+  .file.loaded { border-style: solid; border-color: #bfe2cf; background: var(--green-bg); }
+  .file.loaded .ico { color: var(--green); border-color: #bfe2cf; }
+  .file.invalid { border-style: solid; border-color: #e9b4ae; background: var(--red-bg); }
+  .file.invalid .ico { color: var(--red); }
+  .file .state { font-size: 12px; font-weight: 600; color: var(--green); display: inline-flex; align-items: center; gap: 6px; }
+  .file .state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .file input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  @media (max-width: 560px) { .file { grid-template-columns: auto minmax(0, 1fr); } .file .side { grid-column: 1 / -1; justify-content: flex-end; } }
+
+  .bot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface-2); flex-wrap: wrap; }
+  .bot small { color: var(--subtle); font-size: 11.5px; }
+  .hp { position: absolute; left: -9999px; }
+
+  .submit-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .submit-row .btn-primary { min-height: 46px; padding: 0 22px; font-size: 14.5px; }
+
+  /* Confirmación */
+  .done-card { text-align: center; padding: 36px 24px; }
+  .done-icon { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: var(--green-bg); color: var(--green); }
+  .done-icon svg.lucide { width: 32px; height: 32px; }
+  .done-card h2 { font-size: 24px; letter-spacing: -.02em; }
+  .ticket { display: inline-flex; flex-direction: column; gap: 2px; margin: 20px auto 0; padding: 14px 26px; border-radius: 12px; border: 1px dashed var(--border-strong); background: var(--surface-2); }
+  .ticket small { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); }
+  .ticket strong { font-family: var(--mono); font-size: 22px; color: var(--navy); letter-spacing: .02em; }
+  .next { display: grid; gap: 0; text-align: left; margin-top: 8px; }
+  .next li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+  .next li:first-child { border-top: 0; }
+  .next .n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--navy-050); color: var(--navy); font-weight: 700; font-size: 13px; }
+  .next p { color: var(--muted); font-size: 13px; }
+  .summary { text-align: left; }
+
+  .site-foot { background: var(--navy); color: #b7c3d6; font-size: 12.5px; }
+  .site-foot .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 18px; }
+  .site-foot a { color: #fff; text-decoration: none; margin-left: 18px; }
+</style>
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <span class="brand-mark"><i data-lucide="landmark"></i></span>
+      <span><strong>Instituto Técnico Superior N.º 1</strong><small>SIGA · Ingreso 2027</small></span>
+    </a>
+    <div class="help"><i data-lucide="life-buoy"></i><span>¿Dudas? Secretaría atiende de <strong>lunes a viernes, 8 a 13 h</strong></span></div>
+  </div>
+</header>
+
+<!-- ============ FORMULARIO ============ -->
+<div id="vista-form">
+  <section class="hero">
+    <div class="wrap narrow">
+      <span class="chip"><i data-lucide="graduation-cap" class="i-sm"></i> Ingreso 2027</span>
+      <h1>Solicitud de preinscripción</h1>
+      <p>Completá tus datos, elegí la carrera y adjuntá la documentación. No necesitás crear una cuenta: al enviar te llega por correo el número de tu solicitud.</p>
+      <ol class="steps" id="steps">
+        <li data-step="personales"><a href="#sec-personales"><span class="dot">1</span><span class="label">Tus datos</span></a></li>
+        <li class="sep" aria-hidden="true"></li>
+        <li data-step="carrera"><a href="#sec-carrera"><span class="dot">2</span><span class="label">Carrera</span></a></li>
+        <li class="sep" aria-hidden="true"></li>
+        <li data-step="docs"><a href="#sec-docs"><span class="dot">3</span><span class="label">Documentación</span></a></li>
+        <li class="sep" aria-hidden="true"></li>
+        <li data-step="envio"><a href="#sec-envio"><span class="dot">4</span><span class="label">Envío</span></a></li>
+      </ol>
+    </div>
+  </section>
+
+  <main class="wrap narrow">
+    <form id="form" novalidate>
+      <div class="period">
+        <span><span class="live">Inscripción abierta</span></span>
+        <span>Período <strong id="periodo-nombre"></strong> · hasta el <strong id="periodo-fin"></strong></span>
+      </div>
+
+      <!-- Datos personales  -> tabla usuarios -->
+      <section class="card" id="sec-personales">
+        <div class="card-head"><div><h2>Datos personales</h2><p>Escribilos tal como figuran en tu documento de identidad.</p></div></div>
+        <div class="card-body grid">
+          <div class="grid cols-2">
+            <div class="field"><label for="nombre">Nombre <span class="req">*</span></label><input class="control" id="nombre" name="nombre" autocomplete="given-name" required maxlength="100" value="Sofía"><span class="error">Ingresá tu nombre.</span></div>
+            <div class="field"><label for="apellido">Apellido <span class="req">*</span></label><input class="control" id="apellido" name="apellido" autocomplete="family-name" required maxlength="100" value="Martínez"><span class="error">Ingresá tu apellido.</span></div>
+          </div>
+          <div class="grid cols-2">
+            <div class="field"><label for="dni">Número de DNI <span class="req">*</span></label><input class="control num" id="dni" name="dni" inputmode="numeric" required pattern="\d{7,8}" value="46318765"><span class="help">Sin puntos ni espacios.</span><span class="error">El DNI debe tener 7 u 8 números.</span></div>
+            <div class="field"><label for="fecha_nacimiento">Fecha de nacimiento <span class="req">*</span></label><input class="control" type="date" id="fecha_nacimiento" name="fecha_nacimiento" required value="2006-08-18" max="2010-12-31"><span class="error">Ingresá tu fecha de nacimiento.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="sec-contacto">
+        <div class="card-head"><div><h2>Datos de contacto</h2><p>Por acá te avisamos cómo avanza tu solicitud y si falta algún documento.</p></div></div>
+        <div class="card-body grid">
+          <div class="grid cols-2">
+            <div class="field"><label for="email">Correo electrónico <span class="req">*</span></label><div class="input-icon"><i data-lucide="mail"></i><input class="control" type="email" id="email" name="email" autocomplete="email" required maxlength="120" value="sofia.martinez@gmail.com"></div><span class="error">Revisá el formato del correo.</span></div>
+            <div class="field"><label for="email2">Repetí el correo <span class="req">*</span></label><div class="input-icon"><i data-lucide="mail"></i><input class="control" type="email" id="email2" name="email2" autocomplete="off" required value="sofia.martinez@gmail.com"></div><span class="error">Los correos no coinciden.</span></div>
+          </div>
+          <div class="grid cols-2">
+            <div class="field"><label for="telefono">Teléfono celular <span class="req">*</span></label><div class="input-icon"><i data-lucide="phone"></i><input class="control num" type="tel" id="telefono" name="telefono" autocomplete="tel" required maxlength="30" value="+54 9 2920 46-2187"></div><span class="help">Con código de área, preferentemente con WhatsApp.</span><span class="error">Ingresá un teléfono de contacto.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Carrera -> periodo_carrera_planes (plan vigente para inscripción) -->
+      <section class="card" id="sec-carrera">
+        <div class="card-head"><div><h2>Carrera</h2><p>Todas las carreras duran 3 años. El plan de estudios se asigna automáticamente.</p></div></div>
+        <div class="card-body grid">
+          <div class="field" id="field-carrera">
+            <span class="label" id="lbl-carrera">Elegí una carrera <span class="req">*</span></span>
+            <div class="careers" id="careers" role="radiogroup" aria-labelledby="lbl-carrera"></div>
+            <span class="error">Elegí la carrera a la que querés inscribirte.</span>
+          </div>
+          <div class="notice warn" id="aviso-espera" hidden><i data-lucide="hourglass"></i><span>Esta carrera ya cubrió el cupo. Podés preinscribirte igual: tu solicitud queda en <strong>lista de espera</strong> y te avisamos si se libera un lugar.</span></div>
+        </div>
+      </section>
+
+      <!-- Documentación -> documentos_estudiantes -->
+      <section class="card" id="sec-docs">
+        <div class="card-head"><div><h2>Documentación</h2><p>PDF, JPG o PNG de hasta 10 MB. Que se lean bien y estén completos.</p></div><span class="pill tone-slate" id="docs-count"></span></div>
+        <div class="card-body"><div class="files" id="files"></div></div>
+      </section>
+
+      <section class="card" id="sec-envio">
+        <div class="card-head"><div><h2>Declaración y envío</h2></div></div>
+        <div class="card-body grid">
+          <label class="check" for="decl"><input type="checkbox" id="decl" name="declaracion" checked><span><strong>Declaro que la información es correcta</strong><span>Los datos y documentos que presento son auténticos y están vigentes.</span></span></label>
+          <label class="check" for="priv"><input type="checkbox" id="priv" name="privacidad" checked><span><strong>Acepto el tratamiento de mis datos personales</strong><span>Autorizo al instituto a usarlos sólo para gestionar esta solicitud, según la Ley 25.326.</span></span></label>
+          <div class="field" id="field-decl"><span class="error">Tenés que aceptar ambas declaraciones para enviar.</span></div>
+
+          <!-- Protección contra envíos automatizados: honeypot + desafío (captcha a definir) -->
+          <input class="hp" type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="bot">
+            <label class="check" for="bot"><input type="checkbox" id="bot"><span><strong>No soy un robot</strong></span></label>
+            <small>Desafío anti-spam · componente a definir</small>
+          </div>
+          <div class="field" id="field-bot"><span class="error">Completá la verificación.</span></div>
+
+          <div class="notice"><i data-lucide="info"></i><span>Al enviar recibís un correo con tu número de solicitud. Guardalo: te lo vamos a pedir si consultás por tu inscripción.</span></div>
+        </div>
+      </section>
+
+      <div class="submit-row">
+        <span class="muted" id="resumen-envio"></span>
+        <button class="btn btn-primary" type="submit"><i data-lucide="send"></i> Enviar solicitud</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<!-- ============ CONFIRMACIÓN ============ -->
+<main class="wrap narrow" id="vista-ok" hidden>
+  <div class="grid" style="padding-block: 36px 64px;">
+    <section class="card done-card">
+      <div class="done-icon"><i data-lucide="circle-check"></i></div>
+      <h2>¡Recibimos tu solicitud!</h2>
+      <p class="muted" style="margin-top:6px">Te enviamos una copia a <strong id="ok-email"></strong>.</p>
+      <div class="ticket"><small>Número de solicitud</small><strong id="ok-id">PRE-2027-00075</strong></div>
+      <div style="margin-top:14px"><button class="btn btn-sm" id="copy-id" type="button"><i data-lucide="copy"></i> Copiar número</button></div>
+    </section>
+
+    <section class="card summary">
+      <div class="card-head"><div><h2>Resumen</h2></div><span class="pill tone-slate">Preinscripto</span></div>
+      <div class="card-body"><dl class="dl" id="ok-resumen"></dl></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div><h2>¿Qué sigue?</h2></div></div>
+      <div class="card-body">
+        <ol class="next" style="list-style:none;padding:0;margin:0">
+          <li><span class="n">1</span><div><strong>Secretaría revisa tu documentación</strong><p>Si algún archivo no se lee o falta información, te escribimos para que lo reenvíes.</p></div></li>
+          <li><span class="n">2</span><div><strong>Te avisamos la resolución por correo</strong><p>Tu inscripción puede quedar confirmada, en lista de espera o ser rechazada con el motivo.</p></div></li>
+          <li><span class="n">3</span><div><strong>Si se confirma, ya sos ingresante</strong><p>Te contamos cómo seguir: inicio de clases y acceso al aula virtual.</p></div></li>
+        </ol>
+      </div>
+    </section>
+    <div><a class="btn" href="#" id="volver"><i data-lucide="arrow-left"></i> Volver al formulario</a></div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap"><span>© 2026 Instituto Técnico Superior N.º 1 · Viedma, Río Negro</span><span><a href="#">Privacidad</a><a href="#">Preguntas frecuentes</a></span></div>
+</footer>
+
+<nav class="mockbar" aria-label="Mockups">
+  <span>Mockups</span>
+  <a href="formulario.html" aria-current="page">Formulario</a>
+  <a href="formulario.html#enviado">Confirmación</a>
+  <a href="aspirantes.html">Bandeja</a>
+  <a href="aspirante.html">Ficha</a>
+</nav>
+
+<script src="assets/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = SIGA, $ = function (id) { return document.getElementById(id); };
+  var MAX = 10 * 1024 * 1024;
+
+  $('periodo-nombre').textContent = S.PERIODO.nombre;
+  $('periodo-fin').textContent = S.fFecha(S.PERIODO.fecha_fin);
+
+  // ---- Carreras con estado de cupo ----
+  var cupos = S.cupos();
+  $('careers').innerHTML = cupos.map(function (c) {
+    var libres = c.carrera.cupo - c.ocupados;
+    var seats = libres > 3 ? '<span class="seats text-green">Hay lugares</span>'
+      : libres > 0 ? '<span class="seats text-amber">Quedan ' + libres + ' lugares</span>'
+      : '<span class="seats text-amber">Cupo completo · lista de espera</span>';
+    return '<label class="career"><input type="radio" name="carrera" value="' + c.carrera.id + '" data-full="' + (libres <= 0) + '"' + (c.carrera.id === 1 ? ' checked' : '') + '>' +
+      '<span class="radio" aria-hidden="true"></span>' +
+      '<span><strong>' + S.esc(c.carrera.nombre) + '</strong><small>' + c.carrera.plan + ' · ' + c.carrera.resolucion + '</small></span>' + seats + '</label>';
+  }).join('');
+
+  // ---- Documentación ----
+  var cargados = { 'DNI': { name: 'DNI_MartinezSofia.pdf', size: 1.2 * 1048576 }, 'Titulo Secundario': { name: 'Titulo_MartinezSofia.pdf', size: 2.8 * 1048576 } };
+  function mb(b) { return b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(b / 1024) + ' KB'; }
+  function renderFiles() {
+    $('files').innerHTML = S.DOCUMENTOS.map(function (d, i) {
+      var f = cargados[d.tipo], bad = f && f.error;
+      var cls = bad ? 'invalid' : f ? 'loaded' : '';
+      var accept = d.tipo === 'Foto Carnet' ? '.jpg,.jpeg,.png' : '.pdf,.jpg,.jpeg,.png';
+      return '<div class="file ' + cls + '">' +
+        '<span class="ico"><i data-lucide="' + (bad ? 'triangle-alert' : f ? 'file-check-2' : d.tipo === 'Foto Carnet' ? 'image' : 'file-up') + '"></i></span>' +
+        '<div style="min-width:0"><strong>' + d.label + ' <span class="req" style="color:var(--red)">*</span></strong>' +
+        '<small>' + (bad ? S.esc(f.error) : f ? S.esc(f.name) + ' · ' + mb(f.size) : d.hint + ' · ' + d.formatos) + '</small></div>' +
+        '<div class="side">' +
+          (f && !bad ? '<span class="state">Cargado</span><button type="button" class="btn btn-ghost btn-icon" data-del="' + d.tipo + '" aria-label="Quitar ' + d.label + '"><i data-lucide="trash-2"></i></button>'
+                     : '<label class="btn btn-sm" for="file-' + i + '"><i data-lucide="upload"></i> ' + (bad ? 'Elegir otro' : 'Seleccionar archivo') + '</label>') +
+          '<input type="file" id="file-' + i + '" data-tipo="' + d.tipo + '" accept="' + accept + '">' +
+        '</div></div>';
+    }).join('');
+    UI.icons(); progress();
+  }
+  $('files').addEventListener('change', function (e) {
+    var inp = e.target, f = inp.files && inp.files[0]; if (!f) return;
+    var tipo = inp.dataset.tipo, ok = tipo === 'Foto Carnet' ? /\.(jpe?g|png)$/i : /\.(pdf|jpe?g|png)$/i;
+    if (!ok.test(f.name)) cargados[tipo] = { name: f.name, size: f.size, error: '“' + f.name + '” no es un formato válido. Usá ' + (tipo === 'Foto Carnet' ? 'JPG o PNG.' : 'PDF, JPG o PNG.') };
+    else if (f.size > MAX) cargados[tipo] = { name: f.name, size: f.size, error: 'El archivo pesa ' + mb(f.size) + '. El máximo es 10 MB.' };
+    else cargados[tipo] = { name: f.name, size: f.size };
+    renderFiles();
+  });
+  $('files').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-del]'); if (!b) return;
+    delete cargados[b.dataset.del]; renderFiles();
+  });
+
+  // ---- Validación ----
+  var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  function val(id) { return $(id).value.trim(); }
+  function checks() {
+    return {
+      nombre: !!val('nombre'), apellido: !!val('apellido'),
+      dni: /^\d{7,8}$/.test(val('dni')), fecha_nacimiento: !!val('fecha_nacimiento'),
+      email: EMAIL.test(val('email')), email2: val('email2') !== '' && val('email2').toLowerCase() === val('email').toLowerCase(),
+      telefono: val('telefono').replace(/\D/g, '').length >= 8,
+      carrera: !!document.querySelector('input[name=carrera]:checked'),
+      docs: S.DOCUMENTOS.every(function (d) { return cargados[d.tipo] && !cargados[d.tipo].error; }),
+      decl: $('decl').checked && $('priv').checked,
+      bot: $('bot').checked
+    };
+  }
+  function progress() {
+    var c = checks();
+    var pasos = {
+      personales: c.nombre && c.apellido && c.dni && c.fecha_nacimiento && c.email && c.email2 && c.telefono,
+      carrera: c.carrera, docs: c.docs, envio: c.decl && c.bot
+    };
+    var current = false;
+    document.querySelectorAll('#steps li[data-step]').forEach(function (li, i) {
+      var ok = pasos[li.dataset.step];
+      li.classList.toggle('done', ok);
+      li.classList.toggle('current', !ok && !current);
+      if (!ok && !current) current = true;
+      li.querySelector('.dot').innerHTML = ok ? '<i data-lucide="check"></i>' : String(i + 1);
+    });
+    var n = S.DOCUMENTOS.filter(function (d) { return cargados[d.tipo] && !cargados[d.tipo].error; }).length;
+    $('docs-count').textContent = n + ' de ' + S.DOCUMENTOS.length + ' cargados';
+    $('docs-count').className = 'pill ' + (n === S.DOCUMENTOS.length ? 'tone-green' : 'tone-amber');
+    var faltan = Object.keys(pasos).filter(function (k) { return !pasos[k]; }).length;
+    $('resumen-envio').textContent = faltan ? 'Te falta completar ' + faltan + (faltan === 1 ? ' paso.' : ' pasos.') : 'Todo listo para enviar.';
+    var sel = document.querySelector('input[name=carrera]:checked');
+    $('aviso-espera').hidden = !(sel && sel.dataset.full === 'true');
+    UI.icons();
+  }
+  $('form').addEventListener('input', progress);
+  $('form').addEventListener('change', progress);
+
+  function mark(id, ok) { var f = $(id).closest ? $(id).closest('.field') : null; if (f) f.classList.toggle('invalid', !ok); }
+  $('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var c = checks();
+    ['nombre', 'apellido', 'dni', 'fecha_nacimiento', 'email', 'email2', 'telefono'].forEach(function (k) { mark(k, c[k]); });
+    $('field-carrera').classList.toggle('invalid', !c.carrera);
+    $('field-decl').classList.toggle('invalid', !c.decl);
+    $('field-bot').classList.toggle('invalid', !c.bot);
+    if (!c.docs) S.DOCUMENTOS.forEach(function (d) { if (!cargados[d.tipo]) cargados[d.tipo] = { name: '', size: 0, error: 'Falta adjuntar este documento.' }; }), renderFiles();
+    var first = document.querySelector('.field.invalid, .file.invalid');
+    if (first) { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    if ($('website').value) return; // honeypot: un bot completó el campo oculto
+    location.hash = 'enviado';
+  });
+
+  // ---- Vista de confirmación ----
+  function showOk() {
+    var on = location.hash === '#enviado';
+    $('vista-form').hidden = on; $('vista-ok').hidden = !on;
+    if (!on) return;
+    var sel = document.querySelector('input[name=carrera]:checked');
+    var car = S.carrera(sel ? +sel.value : 1);
+    $('ok-email').textContent = val('email') || 'tu correo';
+    var filas = [
+      ['Aspirante', val('nombre') + ' ' + val('apellido')],
+      ['DNI', S.fDni(val('dni'))],
+      ['Carrera', car.nombre],
+      ['Plan de estudios', car.plan + ' · ' + car.resolucion],
+      ['Período', S.PERIODO.nombre],
+      ['Fecha de envío', S.fFechaHora(S.HOY)],
+      ['Documentación', S.DOCUMENTOS.length + ' archivos adjuntos']
+    ];
+    $('ok-resumen').innerHTML = filas.map(function (f, i) { return '<div' + (i === 2 ? ' class="wide"' : '') + '><dt>' + f[0] + '</dt><dd>' + S.esc(f[1]) + '</dd></div>'; }).join('');
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', showOk);
+  $('volver').addEventListener('click', function (e) { e.preventDefault(); history.replaceState(null, '', location.pathname); showOk(); });
+  $('copy-id').addEventListener('click', function () {
+    var id = $('ok-id').textContent;
+    var p = navigator.clipboard ? navigator.clipboard.writeText(id) : Promise.reject();
+    p.then(function () { UI.toast('Número copiado'); }, function () { var r = document.createRange(); r.selectNodeContents($('ok-id')); var s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+  });
+
+  renderFiles();
+  showOk();
+})();
+</script>
+</body>
+</html>

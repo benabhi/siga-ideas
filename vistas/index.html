@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGA Mockups de ingreso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="assets/siga.css">
+<style>
+  .wrap { max-width: 960px; margin: 0 auto; padding-inline: 20px; padding-block: 48px 72px; display: grid; gap: 28px; }
+  .head h1 { font-size: clamp(28px, 5vw, 38px); font-weight: 800; letter-spacing: -.03em; color: var(--navy); margin-top: 14px; }
+  .head p { color: var(--muted); max-width: 62ch; margin-top: 8px; font-size: 15px; }
+  .views { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 800px) { .views { grid-template-columns: minmax(0, 1fr); } }
+  .view { display: grid; gap: 10px; align-content: start; padding: 20px; text-decoration: none; color: var(--text); transition: border-color .15s, transform .15s; }
+  .view:hover { border-color: var(--navy); transform: translateY(-2px); }
+  .view .ico { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: var(--navy-050); color: var(--navy); }
+  .view h2 { font-size: 17px; }
+  .view p { color: var(--muted); font-size: 13.5px; }
+  .view .who { font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--subtle); }
+  .view .go { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--navy-600); font-size: 13.5px; margin-top: 4px; }
+  .notes { padding: 20px 22px; }
+  .notes h2 { font-size: 16px; margin-bottom: 10px; }
+  .notes ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: var(--muted); }
+  .notes strong { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <span class="chip"><i data-lucide="landmark" class="i-sm"></i> SIGA · Circuito de ingreso</span>
+    <h1>Preinscripción y validación de aspirantes</h1>
+    <p>Mockups navegables de los módulos M1 y M2 del primer entregable. Los datos son de ejemplo y las acciones funcionan sólo en el navegador: nada se guarda.</p>
+  </header>
+
+  <div class="views">
+    <a class="card view" href="formulario.html">
+      <span class="ico"><i data-lucide="clipboard-list"></i></span>
+      <span class="who">M1 · Público, sin cuenta</span>
+      <h2>Formulario de preinscripción</h2>
+      <p>Datos personales y de contacto, elección de carrera con estado de cupo, carga de documentación y pantalla de confirmación con número de solicitud.</p>
+      <span class="go">Abrir <i data-lucide="arrow-right" class="i-sm"></i></span>
+    </a>
+    <a class="card view" href="aspirantes.html">
+      <span class="ico"><i data-lucide="users"></i></span>
+      <span class="who">M2 · Secretaría</span>
+      <h2>Bandeja de aspirantes</h2>
+      <p>Resumen por estado, cupos por carrera, búsqueda, filtros por estado, carrera y documentación, acciones rápidas y por lote.</p>
+      <span class="go">Abrir <i data-lucide="arrow-right" class="i-sm"></i></span>
+    </a>
+    <a class="card view" href="aspirante.html">
+      <span class="ico"><i data-lucide="id-card"></i></span>
+      <span class="who">M2 · Secretaría</span>
+      <h2>Ficha del aspirante</h2>
+      <p>Lo que cargó en el formulario, verificación documento por documento, cambio de estado con observaciones e historial de auditoría.</p>
+      <span class="go">Abrir <i data-lucide="arrow-right" class="i-sm"></i></span>
+    </a>
+  </div>
+
+  <section class="card notes">
+    <h2>Decisiones tomadas en los mockups</h2>
+    <ul>
+      <li><strong>Campos del formulario:</strong> sólo los que existen en el modelo (<span class="mono">usuarios</span>, <span class="mono">preinscripciones</span>, <span class="mono">documentos_estudiantes</span>). Los antecedentes académicos del mockup de referencia no tienen tabla todavía.</li>
+      <li><strong>Estados:</strong> los del enum <span class="mono">preinscripciones.estado</span> (preinscripto, en revisión, lista de espera, confirmado, rechazado, cancelado), con transiciones válidas definidas.</li>
+      <li><strong>Confirmar</strong> requiere los cuatro documentos aprobados. <strong>Rechazar</strong>, <strong>cancelar</strong> y <strong>lista de espera</strong> exigen una observación.</li>
+      <li><strong>Cupos:</strong> salen de <span class="mono">periodo_carrera_planes</span>. Si la carrera está llena, el formulario avisa que la solicitud entra en lista de espera.</li>
+    </ul>
+  </section>
+</div>
+<script src="assets/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

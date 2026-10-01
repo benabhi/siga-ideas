@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGA Ficha del aspirante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="assets/siga.css">
+<link rel="stylesheet" href="assets/admin.css">
+<style>
+  /* Ficha: cabecera con decisión arriba, datos a la izquierda, resolución e historial a la derecha */
+  .profile { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 20px; }
+  .profile h1 { font-size: 24px; font-weight: 750; letter-spacing: -.02em; }
+  .profile .sub { display: flex; gap: 6px 14px; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin-top: 4px; align-items: center; }
+  .profile .sub span { display: inline-flex; align-items: center; gap: 6px; }
+  .profile .sub svg.lucide { width: 15px; height: 15px; }
+  .decide { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 900px) { .profile { grid-template-columns: auto minmax(0, 1fr); } .decide { grid-column: 1 / -1; justify-content: flex-start; } }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+  @media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .col { display: grid; gap: 20px; min-width: 0; }
+
+  .copy { display: inline-flex; align-items: center; gap: 6px; }
+  .copy button { border: 0; background: none; padding: 2px; border-radius: 4px; color: var(--subtle); cursor: pointer; display: inline-grid; }
+  .copy button:hover { color: var(--text); background: var(--surface-2); }
+  .copy svg.lucide { width: 14px; height: 14px; }
+
+  .progress-docs { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+  .seg { display: flex; gap: 3px; }
+  .seg i { width: 22px; height: 6px; border-radius: 3px; background: var(--border); }
+  .seg i.aprobado { background: var(--green); }
+  .seg i.rechazado { background: var(--red); }
+
+  .doc { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-top: 1px solid var(--border); }
+  .doc:first-child { border-top: 0; padding-top: 0; }
+  .doc .thumb { display: grid; place-items: center; width: 44px; height: 52px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); position: relative; }
+  .doc .thumb em { position: absolute; bottom: -6px; right: -6px; font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .04em; padding: 1px 4px; border-radius: 4px; background: var(--navy); color: #fff; }
+  .doc strong { display: block; font-size: 14px; }
+  .doc small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc .obs { margin-top: 6px; font-size: 12.5px; color: var(--red); display: flex; gap: 6px; align-items: flex-start; }
+  .doc .obs svg.lucide { width: 14px; height: 14px; margin-top: 2px; }
+  .doc .acts { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+  @media (max-width: 640px) { .doc { grid-template-columns: auto minmax(0, 1fr); } .doc .acts { grid-column: 1 / -1; justify-content: flex-start; } }
+  .vpill { font-size: 12px; }
+
+  .resolution { display: grid; gap: 14px; }
+  .resolution .state { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .resolution blockquote { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-size: 13px; }
+  .lifecycle { display: flex; gap: 4px; flex-wrap: wrap; font-size: 11.5px; color: var(--subtle); align-items: center; }
+  .lifecycle b { font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
+  .lifecycle b.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .lifecycle svg.lucide { width: 12px; height: 12px; }
+
+  .timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+  .timeline li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 16px; }
+  .timeline li:not(:last-child)::before { content: ""; position: absolute; left: 10px; top: 22px; bottom: 0; width: 1.5px; background: var(--border); }
+  .timeline .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--navy-050); color: var(--navy-600); }
+  .timeline .dot svg.lucide { width: 12px; height: 12px; stroke-width: 2.5; }
+  .timeline strong { display: block; font-size: 13px; font-weight: 600; }
+  .timeline small { display: block; color: var(--subtle); font-size: 12px; }
+  .timeline p { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+  .pager-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+  /* Vista previa simulada del documento */
+  .preview { display: grid; place-items: center; min-height: 360px; border-radius: 10px; background: repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 10px, #f1f4f8 10px, #f1f4f8 20px); border: 1px solid var(--border); }
+  .sheet { width: min(320px, 90%); aspect-ratio: 1.58; max-width: 100%; border-radius: 10px; background: var(--surface); box-shadow: var(--shadow-lg); padding: 16px; display: grid; grid-template-columns: 80px 1fr; gap: 14px; }
+  .sheet.page { aspect-ratio: .72; width: min(240px, 80%); grid-template-columns: 1fr; align-content: start; }
+  .sheet .ph { border-radius: 6px; background: var(--navy-050); display: grid; place-items: center; color: var(--navy-600); }
+  .sheet .ln { height: 7px; border-radius: 4px; background: var(--border); margin-bottom: 8px; }
+  .preview-meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <a class="brand" href="aspirantes.html"><span class="brand-mark"><i data-lucide="landmark"></i></span><span><strong>SIGA</strong><small>ITS N.º 1 · Ingreso 2027</small></span></a>
+    <div class="nav-label">Admisiones</div>
+    <nav class="nav">
+      <a href="aspirantes.html" aria-current="page"><i data-lucide="users"></i> Aspirantes</a>
+      <a href="aspirantes.html#docs"><i data-lucide="file-text"></i> Documentación pendiente</a>
+      <a href="aspirantes.html#espera"><i data-lucide="hourglass"></i> Lista de espera</a>
+    </nav>
+    <div class="nav-label">Configuración</div>
+    <nav class="nav">
+      <a class="soon" href="#" title="En esta etapa se carga desde el admin de Django"><i data-lucide="graduation-cap"></i> Carreras y cupos</a>
+      <a class="soon" href="#" title="En esta etapa se carga desde el admin de Django"><i data-lucide="calendar-range"></i> Períodos de inscripción</a>
+      <a class="soon" href="#" title="En esta etapa se carga desde el admin de Django"><i data-lucide="user-cog"></i> Usuarios y permisos</a>
+    </nav>
+    <div class="side-foot"><i data-lucide="calendar-days"></i><strong>Ingreso 2027 abierto</strong><span>Del 1 sep al 18 dic 2026.</span></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-ghost btn-icon menu-btn" aria-label="Abrir menú"><i data-lucide="menu"></i></button>
+      <div class="crumbs"><a href="#">Admisiones</a><i data-lucide="chevron-right"></i><a href="aspirantes.html">Aspirantes</a><i data-lucide="chevron-right"></i><strong id="crumb"></strong></div>
+      <div class="spacer"></div>
+      <button class="btn btn-icon bell" aria-label="Notificaciones"><i data-lucide="bell"></i></button>
+      <div class="me"><span class="avatar">MQ</span><div><strong>Marta Quiroga</strong><small>Secretaría académica</small></div></div>
+    </header>
+
+    <main class="content" id="content">
+      <div class="pager-nav">
+        <a class="btn btn-ghost btn-sm" href="aspirantes.html"><i data-lucide="arrow-left"></i> Volver a la bandeja</a>
+        <div style="display:flex;gap:6px;align-items:center"><span class="muted" id="pos" style="font-size:12.5px"></span><a class="btn btn-sm btn-icon" id="prev" aria-label="Aspirante anterior"><i data-lucide="chevron-left"></i></a><a class="btn btn-sm btn-icon" id="next" aria-label="Aspirante siguiente"><i data-lucide="chevron-right"></i></a></div>
+      </div>
+
+      <section class="card profile">
+        <span class="avatar avatar-lg" id="av"></span>
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h1 id="name"></h1><span id="pill"></span></div>
+          <div class="sub">
+            <span class="mono" id="sol"></span>
+            <span><i data-lucide="graduation-cap"></i><span id="car-corto"></span></span>
+            <span><i data-lucide="calendar-days"></i><span id="fecha"></span></span>
+          </div>
+        </div>
+        <div class="decide" id="decide"></div>
+      </section>
+
+      <div class="notice warn" id="aviso" hidden></div>
+
+      <div class="layout">
+        <div class="col">
+          <section class="card">
+            <div class="card-head"><div><h2>Datos personales</h2><p>Declarados por el aspirante en el formulario.</p></div></div>
+            <div class="card-body"><dl class="dl" id="personales"></dl></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><div><h2>Contacto</h2></div></div>
+            <div class="card-body"><dl class="dl" id="contacto"></dl></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><div><h2>Carrera solicitada</h2></div><span id="cupo-pill"></span></div>
+            <div class="card-body"><dl class="dl" id="carrera"></dl></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <div><h2>Documentación</h2><p>Revisá cada archivo. Para confirmar la inscripción, todos tienen que estar aprobados.</p></div>
+              <div class="progress-docs"><span class="seg" id="seg"></span><span id="seg-txt"></span></div>
+            </div>
+            <div class="card-body" id="docs"></div>
+          </section>
+        </div>
+
+        <div class="col">
+          <section class="card">
+            <div class="card-head"><div><h2>Resolución</h2></div></div>
+            <div class="card-body resolution" id="resolucion"></div>
+          </section>
+          <section class="card">
+            <div class="card-head"><div><h2>Historial</h2><p>Registro de auditoría de la solicitud.</p></div></div>
+            <div class="card-body"><ol class="timeline" id="historial"></ol></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<nav class="mockbar" aria-label="Mockups">
+  <span>Mockups</span>
+  <a href="formulario.html">Formulario</a>
+  <a href="aspirantes.html">Bandeja</a>
+  <a href="aspirante.html" aria-current="page">Ficha</a>
+</nav>
+
+<script src="assets/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = SIGA, $ = function (id) { return document.getElementById(id); };
+  var A = S.aspirantes;
+  var VERB = {
+    en_revision: { label: 'Pasar a revisión', icon: 'search-check', cls: '' },
+    lista_espera: { label: 'Lista de espera', icon: 'hourglass', cls: '' },
+    rechazado: { label: 'Rechazar', icon: 'x', cls: 'btn-danger' },
+    confirmado: { label: 'Confirmar inscripción', icon: 'check', cls: 'btn-success' },
+    cancelado: { label: 'Cancelar inscripción', icon: 'ban', cls: 'btn-danger' }
+  };
+  var ORDEN = ['en_revision', 'cancelado', 'rechazado', 'lista_espera', 'confirmado'];
+
+  function current() {
+    var id = location.hash.slice(1);
+    // Por defecto, la solicitud de Sofía Martínez (la del mockup de referencia)
+    return A.filter(function (a) { return a.id === id; })[0] || A.filter(function (a) { return a.apellido === 'Martínez' && a.nombre === 'Sofía'; })[0];
+  }
+
+  function copyBtn(v) { return '<span class="copy"><span>' + S.esc(v) + '</span><button type="button" data-copy="' + S.esc(v) + '" aria-label="Copiar"><i data-lucide="copy"></i></button></span>'; }
+  function dl(rows) { return rows.map(function (r) { return '<div' + (r[2] ? ' class="wide"' : '') + '><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join(''); }
+
+  function render() {
+    var a = current(), c = S.carrera(a.carrera_id), d = S.docsResumen(a);
+    var idx = A.indexOf(a);
+    document.title = 'SIGA · ' + a.nombre + ' ' + a.apellido;
+    $('crumb').textContent = a.nombre + ' ' + a.apellido;
+    $('pos').textContent = (idx + 1) + ' de ' + A.length;
+    $('prev').href = idx > 0 ? '#' + A[idx - 1].id : '#' + a.id; $('prev').setAttribute('aria-disabled', idx === 0);
+    $('next').href = idx < A.length - 1 ? '#' + A[idx + 1].id : '#' + a.id; $('next').setAttribute('aria-disabled', idx === A.length - 1);
+
+    $('av').textContent = S.iniciales(a);
+    $('name').textContent = a.nombre + ' ' + a.apellido;
+    $('pill').innerHTML = UI.pill(a.estado);
+    $('sol').textContent = a.id;
+    $('car-corto').textContent = c.corto;
+    $('fecha').textContent = 'Recibida el ' + S.fFechaHora(a.fecha_preinscripcion);
+
+    // Acciones según las transiciones válidas del estado actual
+    var next = S.TRANSICIONES[a.estado].slice().sort(function (x, y) { return ORDEN.indexOf(x) - ORDEN.indexOf(y); });
+    var docsOk = d.aprobados === d.total;
+    $('decide').innerHTML = next.length ? next.map(function (k) {
+      var v = VERB[k], blocked = k === 'confirmado' && !docsOk;
+      if (k === 'en_revision' && a.estado === 'rechazado') v = { label: 'Reabrir solicitud', icon: 'undo-2', cls: '' };
+      return '<button class="btn ' + v.cls + '" data-to="' + k + '"' + (blocked ? ' disabled title="Faltan documentos por aprobar"' : '') + '><i data-lucide="' + v.icon + '"></i> ' + v.label + '</button>';
+    }).join('') : '<span class="muted">Solicitud cerrada. No admite más cambios.</span>';
+
+    var cupo = S.cupos().filter(function (x) { return x.carrera.id === c.id; })[0];
+    var lleno = cupo.ocupados >= c.cupo;
+    var aviso = '';
+    if (a.estado === 'en_revision' || a.estado === 'preinscripto') {
+      if (!docsOk) aviso = '<i data-lucide="triangle-alert"></i><span>' + (d.rechazados ? 'Hay ' + d.rechazados + ' documento' + (d.rechazados > 1 ? 's observados' : ' observado') + '. El aspirante tiene que volver a enviarlo antes de confirmar.' : 'Faltan ' + (d.total - d.aprobados) + ' documentos por verificar para poder confirmar la inscripción.') + '</span>';
+      else if (lleno) aviso = '<i data-lucide="hourglass"></i><span>La carrera tiene el cupo cubierto (' + cupo.ocupados + '/' + c.cupo + '). Considerá pasarla a lista de espera.</span>';
+    }
+    $('aviso').innerHTML = aviso; $('aviso').hidden = !aviso;
+
+    $('personales').innerHTML = dl([
+      ['Nombre', S.esc(a.nombre)], ['Apellido', S.esc(a.apellido)],
+      ['DNI', '<span class="num">' + copyBtn(S.fDni(a.dni)) + '</span>'],
+      ['Fecha de nacimiento', S.fNac(a.fecha_nacimiento) + ' <span class="muted">(' + S.edad(a.fecha_nacimiento) + ' años)</span>']
+    ]);
+    $('contacto').innerHTML = dl([
+      ['Correo electrónico', copyBtn(a.email)],
+      ['Teléfono celular', '<span class="num">' + copyBtn(a.telefono) + '</span>']
+    ]);
+    $('carrera').innerHTML = dl([
+      ['Carrera', S.esc(c.nombre), true],
+      ['Plan de estudios', c.plan + ' · ' + c.resolucion],
+      ['Período', S.PERIODO.nombre + ' <span class="muted">(' + S.PERIODO.codigo + ')</span>'],
+      ['Cupo de la carrera', '<span class="num">' + cupo.ocupados + ' / ' + c.cupo + '</span> ocupados'],
+      ['Lista de espera', '<span class="num">' + cupo.espera + ' / ' + c.espera + '</span>']
+    ]);
+    $('cupo-pill').innerHTML = lleno ? '<span class="pill tone-amber">Cupo cubierto</span>' : '<span class="pill tone-green">Con lugares</span>';
+
+    // Documentación
+    $('seg').innerHTML = a.documentos.map(function (x) { return '<i class="' + x.estado_verificacion + '"></i>'; }).join('');
+    $('seg-txt').textContent = d.aprobados + ' de ' + d.total + ' aprobados';
+    var editable = a.estado === 'preinscripto' || a.estado === 'en_revision';
+    $('docs').innerHTML = a.documentos.map(function (x, i) {
+      var ext = x.nombre_archivo.split('.').pop().toUpperCase();
+      var tone = { pendiente: 'amber', aprobado: 'green', rechazado: 'red' }[x.estado_verificacion];
+      var lbl = { pendiente: 'Sin verificar', aprobado: 'Aprobado', rechazado: 'Observado' }[x.estado_verificacion];
+      return '<div class="doc">' +
+        '<span class="thumb"><i data-lucide="' + (ext === 'PDF' ? 'file-text' : 'image') + '"></i><em>' + ext + '</em></span>' +
+        '<div style="min-width:0"><strong>' + x.label + ' <span class="pill vpill tone-' + tone + '">' + lbl + '</span></strong><small>' + S.esc(x.nombre_archivo) + ' · ' + x.tamanio + '</small>' +
+          (x.observaciones ? '<div class="obs"><i data-lucide="message-square-text"></i>' + S.esc(x.observaciones) + '</div>' : '') + '</div>' +
+        '<div class="acts">' +
+          '<button class="btn btn-sm" data-ver="' + i + '"><i data-lucide="eye"></i> Ver</button>' +
+          (editable ? (x.estado_verificacion !== 'aprobado' ? '<button class="btn btn-sm qa-ok" style="border-color:#bfe2cf" data-doc="' + i + '" data-v="aprobado"><i data-lucide="check"></i> Aprobar</button>' : '') +
+            (x.estado_verificacion !== 'rechazado' ? '<button class="btn btn-sm btn-danger" data-doc="' + i + '" data-v="rechazado"><i data-lucide="x"></i> Observar</button>' : '') : '') +
+        '</div></div>';
+    }).join('');
+
+    // Resolución
+    var lc = ['preinscripto', 'en_revision', a.estado === 'lista_espera' ? 'lista_espera' : null, ['confirmado', 'rechazado', 'cancelado'].indexOf(a.estado) >= 0 ? a.estado : 'confirmado'].filter(Boolean);
+    $('resolucion').innerHTML =
+      '<div class="state"><span class="muted">Estado actual</span>' + UI.pill(a.estado) + '</div>' +
+      '<div class="lifecycle">' + lc.map(function (k, i) { return (i ? '<i data-lucide="chevron-right"></i>' : '') + '<b class="' + (k === a.estado ? 'on' : '') + '">' + S.ESTADOS[k].label + '</b>'; }).join('') + '</div>' +
+      '<dl class="dl" style="grid-template-columns:1fr 1fr">' + dl([
+        ['Revisor', a.revisor ? S.esc(a.revisor.nombre) + '<div class="subtle" style="font-weight:400;font-size:12px">' + a.revisor.cargo + '</div>' : '<span class="subtle">Sin asignar</span>'],
+        ['Fecha de resolución', a.fecha_revision ? S.fFechaHora(a.fecha_revision) : '<span class="subtle">Pendiente</span>']
+      ]) + '</dl>' +
+      (a.observaciones ? '<div><div class="muted" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Observaciones</div><blockquote>' + S.esc(a.observaciones) + '</blockquote></div>' : '');
+
+    // Historial (más reciente primero)
+    $('historial').innerHTML = a.historial.slice().reverse().map(function (h) {
+      var icon = /recibida/.test(h.accion) ? 'inbox' : /aprobado/.test(h.accion) ? 'check' : /observado|Rechaz/.test(h.accion) ? 'x' : 'arrow-right';
+      return '<li><span class="dot"><i data-lucide="' + icon + '"></i></span><div><strong>' + S.esc(h.accion) + '</strong><small>' + S.fFechaHora(h.fecha) + ' · ' + S.esc(h.actor) + '</small>' + (h.detalle ? '<p>' + S.esc(h.detalle) + '</p>' : '') + '</div></li>';
+    }).join('');
+
+    UI.icons();
+  }
+
+  function log(a, accion, detalle) { a.historial.push({ fecha: new Date(), accion: accion, detalle: detalle || '', actor: S.USUARIO_ACTUAL.nombre }); }
+
+  // Cambiar estado de la solicitud
+  $('decide').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-to]'); if (!b) return;
+    var a = current(), to = b.dataset.to, req = to === 'rechazado' || to === 'cancelado' || to === 'lista_espera';
+    var v = VERB[to];
+    UI.modal({
+      title: v.label + ' · ' + a.nombre + ' ' + a.apellido,
+      text: 'Pasa de ' + S.ESTADOS[a.estado].label + ' a ' + S.ESTADOS[to].label + '.',
+      body: '<div class="field"><label for="m-obs">Observaciones' + (req ? ' <span class="req">*</span>' : '') + '</label><textarea class="control" id="m-obs" placeholder="' + (to === 'rechazado' ? 'Motivo del rechazo. Se le envía al aspirante.' : 'Queda registrado en el historial.') + '"></textarea><span class="error">Este cambio necesita una observación.</span></div>' +
+        (to === 'rechazado' || to === 'confirmado' ? '<label class="check" for="m-mail"><input type="checkbox" id="m-mail" checked><span><strong>Avisar al aspirante por correo</strong><span>' + S.esc(a.email) + '</span></span></label>' : ''),
+      confirm: v.label,
+      tone: v.cls || 'btn-primary',
+      onConfirm: function (m) {
+        var obs = m.querySelector('#m-obs').value.trim();
+        if (req && !obs) { m.querySelector('.field').classList.add('invalid'); return false; }
+        a.estado = to; if (obs) a.observaciones = obs;
+        a.revisor = S.USUARIO_ACTUAL;
+        a.fecha_revision = ['confirmado', 'rechazado', 'lista_espera', 'cancelado'].indexOf(to) >= 0 ? new Date() : null;
+        log(a, 'Pasó a ' + S.ESTADOS[to].label, obs);
+        render(); UI.toast('Solicitud: ' + S.ESTADOS[to].label);
+      }
+    });
+  });
+
+  // Verificar documentos y vista previa
+  $('docs').addEventListener('click', function (e) {
+    var a = current();
+    var ver = e.target.closest('[data-ver]');
+    if (ver) {
+      var x = a.documentos[+ver.dataset.ver], foto = x.tipo === 'Foto Carnet', dni = x.tipo === 'DNI';
+      UI.modal({
+        title: x.label, text: x.nombre_archivo + ' · ' + x.tamanio, wide: true,
+        body: '<div class="preview"><div class="sheet' + (dni ? '' : ' page') + '">' +
+          (dni ? '<div class="ph"><i data-lucide="user-round"></i></div><div><div class="ln" style="width:70%"></div><div class="ln"></div><div class="ln" style="width:55%"></div><div class="ln" style="width:80%"></div><div class="mono" style="font-size:12px;margin-top:10px;color:var(--muted)">' + S.fDni(a.dni) + '</div></div>'
+               : foto ? '<div class="ph" style="aspect-ratio:.8"><i data-lucide="user-round" style="width:48px;height:48px"></i></div>'
+               : '<div class="ln" style="width:50%;margin:6px auto 14px"></div>' + new Array(9).join('<div class="ln"></div>') + '<div class="ln" style="width:60%"></div>') +
+          '</div></div><div class="preview-meta"><span>Vista previa simulada. El archivo real se sirve por la aplicación, nunca por una URL pública.</span><span>Subido el ' + S.fFechaHora(a.fecha_preinscripcion) + '</span></div>'
+      });
+      return;
+    }
+    var b = e.target.closest('[data-doc]'); if (!b) return;
+    var doc = a.documentos[+b.dataset.doc], v = b.dataset.v;
+    if (v === 'aprobado') {
+      doc.estado_verificacion = 'aprobado'; doc.observaciones = '';
+      if (a.estado === 'preinscripto') { a.estado = 'en_revision'; a.revisor = S.USUARIO_ACTUAL; log(a, 'Pasó a En revisión'); }
+      log(a, 'Documento aprobado: ' + doc.label);
+      render(); UI.toast(doc.label + ' aprobado');
+      return;
+    }
+    UI.modal({
+      title: 'Observar ' + doc.label.toLowerCase(), text: 'El aspirante recibe el motivo y tiene que volver a enviarlo.',
+      body: '<div class="field"><label for="m-obs">Motivo <span class="req">*</span></label><select class="control" id="m-sel"><option>La imagen no es legible.</option><option>Falta el dorso del documento.</option><option>El documento está incompleto.</option><option>No corresponde al documento solicitado.</option><option value="">Otro motivo…</option></select><textarea class="control" id="m-obs" placeholder="Detalle (opcional)"></textarea><span class="error">Indicá un motivo.</span></div>',
+      confirm: 'Marcar como observado', tone: 'btn-danger',
+      onConfirm: function (m) {
+        var motivo = (m.querySelector('#m-sel').value + ' ' + m.querySelector('#m-obs').value).trim();
+        if (!motivo) { m.querySelector('.field').classList.add('invalid'); return false; }
+        doc.estado_verificacion = 'rechazado'; doc.observaciones = motivo;
+        if (a.estado === 'preinscripto') { a.estado = 'en_revision'; a.revisor = S.USUARIO_ACTUAL; log(a, 'Pasó a En revisión'); }
+        log(a, 'Documento observado: ' + doc.label, motivo);
+        render(); UI.toast(doc.label + ' observado');
+      }
+    });
+  });
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-copy]'); if (!b) return;
+    var v = b.dataset.copy;
+    (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function () { UI.toast('Copiado: ' + v); }, function () {
+      var r = document.createRange(); r.selectNodeContents(b.previousElementSibling); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    });
+  });
+
+  window.addEventListener('hashchange', function () { render(); window.scrollTo(0, 0); });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGA Aspirantes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="assets/siga.css">
+<link rel="stylesheet" href="assets/admin.css">
+<style>
+  /* KPIs por estado: también funcionan como filtro rápido */
+  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1240px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { text-align: left; padding: 14px 16px; cursor: pointer; display: grid; gap: 6px; transition: border-color .15s, box-shadow .15s; }
+  .kpi:hover { border-color: var(--border-strong); }
+  .kpi[aria-pressed="true"] { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy); }
+  .kpi .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 500; }
+  .kpi .ico { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; }
+  .kpi .ico svg.lucide { width: 16px; height: 16px; }
+  .kpi .val { display: flex; align-items: baseline; gap: 8px; }
+  .kpi .val strong { font-size: 28px; font-weight: 750; letter-spacing: -.02em; line-height: 1.1; }
+  .kpi .val span { color: var(--subtle); font-size: 12px; }
+
+  /* Cupos por carrera */
+  .quota-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 24px; }
+  .quota { display: grid; gap: 6px; min-width: 0; }
+  .quota .name { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .quota .name strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar { position: relative; height: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+  .bar span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--navy); }
+  .bar.full span { background: var(--amber); }
+  .quota small { color: var(--subtle); font-size: 12px; }
+
+  /* Tabla */
+  .toolbar { display: flex; gap: 10px; padding: 16px; flex-wrap: wrap; align-items: center; }
+  .toolbar .search { flex: 1 1 280px; }
+  .toolbar select.control { width: auto; min-width: 150px; flex: 0 1 auto; }
+  .meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 16px 12px; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fchip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px 3px 10px; border-radius: 999px; background: var(--navy-050); color: var(--navy-600); font-weight: 600; font-size: 12px; border: 0; cursor: pointer; }
+  .fchip svg.lucide { width: 13px; height: 13px; }
+
+  .bulk { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--navy); color: #fff; flex-wrap: wrap; }
+  .bulk .btn { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #fff; }
+  .bulk .btn:hover { background: rgba(255,255,255,.18); }
+
+  .table-wrap { overflow-x: auto; border-top: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; min-width: 940px; }
+  thead th { position: sticky; top: 0; background: var(--surface-2); text-align: left; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 11px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  thead th button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  thead th button:focus-visible { outline: 2px solid var(--focus); }
+  tbody td { padding: 12px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr { cursor: pointer; transition: background .1s; }
+  tbody tr:hover { background: #fafbfd; }
+  tbody tr.sel { background: var(--navy-050); }
+  td.c-check, th.c-check { width: 44px; padding-right: 0; }
+  td.c-check input, th.c-check input { width: 16px; height: 16px; accent-color: var(--navy); cursor: pointer; }
+  .who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .who strong { display: block; font-weight: 600; }
+  .who small { display: block; color: var(--muted); font-size: 12.5px; }
+  .docs { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .docs svg.lucide { width: 16px; height: 16px; }
+  .row-actions { display: flex; justify-content: flex-end; gap: 6px; }
+  .qa { width: 32px; min-height: 32px; padding: 0; border: 0; }
+  .qa-ok { background: var(--green-bg); color: var(--green); }
+  .qa-ok:hover { background: #d3ecdf; }
+  .qa-no { background: var(--red-bg); color: var(--red); }
+  .qa-no:hover { background: #f8d9d6; }
+  .id { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .empty { padding: 48px 16px; text-align: center; color: var(--muted); }
+  .empty strong { display: block; color: var(--text); font-size: 15px; margin-bottom: 4px; }
+
+  .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+  .pages { display: flex; gap: 4px; }
+  .pages button { min-width: 34px; height: 34px; border-radius: 8px; border: 1px solid transparent; background: transparent; cursor: pointer; font-weight: 600; color: var(--muted); }
+  .pages button:hover { background: var(--surface-2); }
+  .pages button[aria-current="page"] { background: var(--navy); color: #fff; }
+  .pages button.arrow { border-color: var(--border-strong); display: grid; place-items: center; }
+  .pages button:disabled { opacity: .4; cursor: default; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <a class="brand" href="aspirantes.html"><span class="brand-mark"><i data-lucide="landmark"></i></span><span><strong>SIGA</strong><small>ITS N.º 1 · Ingreso 2027</small></span></a>
+    <div class="nav-label">Admisiones</div>
+    <nav class="nav">
+      <a href="aspirantes.html" aria-current="page"><i data-lucide="users"></i> Aspirantes <span class="count" id="nav-total"></span></a>
+      <a href="aspirantes.html#docs"><i data-lucide="file-text"></i> Documentación pendiente <span class="count" id="nav-docs"></span></a>
+      <a href="aspirantes.html#espera"><i data-lucide="hourglass"></i> Lista de espera <span class="count" id="nav-espera"></span></a>
+    </nav>
+    <div class="nav-label">Configuración</div>
+    <nav class="nav">
+      <a class="soon" href="#" title="En esta etapa se carga desde el admin de Django"><i data-lucide="graduation-cap"></i> Carreras y cupos</a>
+      <a class="soon" href="#" title="En esta etapa se carga desde el admin de Django"><i data-lucide="calendar-range"></i> Períodos de inscripción</a>
+      <a class="soon" href="#" title="En esta etapa se carga desde el admin de Django"><i data-lucide="user-cog"></i> Usuarios y permisos</a>
+    </nav>
+    <div class="side-foot"><i data-lucide="calendar-days"></i><strong>Ingreso 2027 abierto</strong><span id="periodo-txt"></span></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-ghost btn-icon menu-btn" aria-label="Abrir menú"><i data-lucide="menu"></i></button>
+      <div class="crumbs"><a href="#">Admisiones</a><i data-lucide="chevron-right"></i><strong>Aspirantes</strong></div>
+      <div class="spacer"></div>
+      <button class="btn btn-icon bell" aria-label="Notificaciones"><i data-lucide="bell"></i></button>
+      <div class="me"><span class="avatar">MQ</span><div><strong>Marta Quiroga</strong><small>Secretaría académica</small></div></div>
+    </header>
+
+    <main class="content">
+      <div class="page-head">
+        <div><h1>Aspirantes</h1><p>Preinscripciones del período Ingreso 2027. Revisá la documentación y resolvé cada solicitud.</p></div>
+        <div class="actions"><button class="btn" id="export"><i data-lucide="download"></i> Exportar listado</button></div>
+      </div>
+
+      <section class="kpis" id="kpis" aria-label="Resumen por estado"></section>
+
+      <section class="card">
+        <div class="card-head"><div><h2>Cupos por carrera</h2><p>Lugares ocupados (preinscriptos, en revisión y confirmados) y lista de espera.</p></div></div>
+        <div class="card-body"><div class="quota-list" id="quotas"></div></div>
+      </section>
+
+      <section class="card" style="overflow:hidden">
+        <div class="toolbar">
+          <div class="input-icon search"><i data-lucide="search"></i><input class="control" id="q" type="search" placeholder="Buscar por nombre, DNI, correo o número de solicitud"></div>
+          <select class="control" id="f-estado" aria-label="Filtrar por estado"><option value="">Estado: todos</option></select>
+          <select class="control" id="f-carrera" aria-label="Filtrar por carrera"><option value="">Carrera: todas</option></select>
+          <select class="control" id="f-docs" aria-label="Filtrar por documentación">
+            <option value="">Documentación: toda</option>
+            <option value="pendiente">Con documentos sin verificar</option>
+            <option value="observada">Con documentos observados</option>
+            <option value="completa">Completa y verificada</option>
+          </select>
+        </div>
+        <div class="meta"><span id="count"></span><div class="chips" id="chips"></div></div>
+        <div class="bulk" id="bulk" hidden>
+          <strong id="bulk-n"></strong>
+          <button class="btn btn-sm" data-bulk="en_revision"><i data-lucide="search-check"></i> Pasar a revisión</button>
+          <button class="btn btn-sm" data-bulk="export"><i data-lucide="download"></i> Exportar selección</button>
+          <button class="btn btn-sm" data-bulk="clear" style="margin-left:auto">Quitar selección</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th class="c-check"><input type="checkbox" id="all" aria-label="Seleccionar todos los de esta página"></th>
+              <th><button data-sort="apellido">Aspirante <i data-lucide="chevrons-up-down" class="i-sm"></i></button></th>
+              <th><button data-sort="carrera">Carrera <i data-lucide="chevrons-up-down" class="i-sm"></i></button></th>
+              <th><button data-sort="fecha">Fecha <i data-lucide="chevrons-up-down" class="i-sm"></i></button></th>
+              <th>Documentación</th>
+              <th>Estado</th>
+              <th style="text-align:right">Acciones</th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="pager"><span id="pager-txt"></span><div class="pages" id="pages"></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<nav class="mockbar" aria-label="Mockups">
+  <span>Mockups</span>
+  <a href="formulario.html">Formulario</a>
+  <a href="aspirantes.html" aria-current="page">Bandeja</a>
+  <a href="aspirante.html">Ficha</a>
+</nav>
+
+<script src="assets/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = SIGA, $ = function (id) { return document.getElementById(id); };
+  var A = S.aspirantes;
+  var PER_PAGE = 10;
+  var st = { q: '', estado: '', carrera: '', docs: '', sort: 'fecha', dir: -1, page: 1, sel: {} };
+
+  $('periodo-txt').textContent = 'Del ' + S.fFecha(S.PERIODO.fecha_inicio) + ' al ' + S.fFecha(S.PERIODO.fecha_fin) + '.';
+
+  Object.keys(S.ESTADOS).forEach(function (k) { $('f-estado').insertAdjacentHTML('beforeend', '<option value="' + k + '">' + S.ESTADOS[k].label + '</option>'); });
+  S.CARRERAS.forEach(function (c) { $('f-carrera').insertAdjacentHTML('beforeend', '<option value="' + c.id + '">' + S.esc(c.corto) + '</option>'); });
+
+  function count(fn) { return A.filter(fn).length; }
+
+  // ---- KPIs ----
+  function renderKpis() {
+    var total = A.length;
+    var semana = count(function (a) { return S.HOY - a.fecha_preinscripcion < 7 * 864e5; });
+    var tiles = [
+      { k: '', label: 'Total', icon: 'users', tone: 'slate', n: total, sub: '+' + semana + ' esta semana' },
+      { k: 'preinscripto', n: count(function (a) { return a.estado === 'preinscripto'; }), sub: 'sin revisar' },
+      { k: 'en_revision', n: count(function (a) { return a.estado === 'en_revision'; }), sub: count(function (a) { return a.estado === 'en_revision' && S.docsResumen(a).rechazados; }) + ' con docs. observados' },
+      { k: 'lista_espera', n: count(function (a) { return a.estado === 'lista_espera'; }), sub: 'por cupo' },
+      { k: 'confirmado', n: count(function (a) { return a.estado === 'confirmado'; }) },
+      { k: 'rechazado', n: count(function (a) { return a.estado === 'rechazado'; }) }
+    ];
+    $('kpis').innerHTML = tiles.map(function (t) {
+      var e = S.ESTADOS[t.k] || {}, tone = t.tone || e.tone;
+      var sub = t.sub || Math.round(t.n / total * 100) + '% del total';
+      return '<button class="card kpi" data-k="' + t.k + '" aria-pressed="' + (st.estado === t.k) + '">' +
+        '<span class="top">' + (t.label || e.label) + '<span class="ico tone-' + tone + '"><i data-lucide="' + (t.icon || e.icon) + '"></i></span></span>' +
+        '<span class="val"><strong class="num">' + t.n + '</strong><span>' + sub + '</span></span></button>';
+    }).join('');
+    $('nav-total').textContent = total;
+    $('nav-docs').textContent = count(function (a) { return a.estado === 'preinscripto' || a.estado === 'en_revision'; });
+    $('nav-espera').textContent = count(function (a) { return a.estado === 'lista_espera'; });
+  }
+  $('kpis').addEventListener('click', function (e) {
+    var b = e.target.closest('.kpi'); if (!b) return;
+    st.estado = b.dataset.k; $('f-estado').value = st.estado; st.page = 1; render();
+  });
+
+  // ---- Cupos ----
+  function renderQuotas() {
+    $('quotas').innerHTML = S.cupos().map(function (c) {
+      var pct = Math.min(100, c.ocupados / c.carrera.cupo * 100), full = c.ocupados >= c.carrera.cupo;
+      return '<div class="quota"><div class="name"><strong title="' + S.esc(c.carrera.nombre) + '">' + S.esc(c.carrera.corto) + '</strong><span class="num ' + (full ? 'text-amber' : '') + '">' + c.ocupados + ' / ' + c.carrera.cupo + '</span></div>' +
+        '<div class="bar' + (full ? ' full' : '') + '" role="img" aria-label="' + c.ocupados + ' de ' + c.carrera.cupo + ' lugares"><span style="width:' + pct + '%"></span></div>' +
+        '<small>' + (full ? 'Cupo cubierto · ' : (c.carrera.cupo - c.ocupados) + ' lugares libres · ') + 'lista de espera ' + c.espera + ' / ' + c.carrera.espera + '</small></div>';
+    }).join('');
+  }
+
+  // ---- Tabla ----
+  function filtered() {
+    var q = st.q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    var out = A.filter(function (a) {
+      if (st.estado && a.estado !== st.estado) return false;
+      if (st.carrera && a.carrera_id !== +st.carrera) return false;
+      if (st.docs) {
+        var d = S.docsResumen(a);
+        if (st.docs === 'pendiente' && d.aprobados + d.rechazados === d.total) return false;
+        if (st.docs === 'observada' && !d.rechazados) return false;
+        if (st.docs === 'completa' && d.aprobados !== d.total) return false;
+      }
+      if (q) {
+        var hay = (a.nombre + ' ' + a.apellido + ' ' + a.dni + ' ' + a.email + ' ' + a.id).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+    out.sort(function (x, y) {
+      var a = st.sort === 'apellido' ? x.apellido + x.nombre : st.sort === 'carrera' ? S.carrera(x.carrera_id).corto : x.fecha_preinscripcion;
+      var b = st.sort === 'apellido' ? y.apellido + y.nombre : st.sort === 'carrera' ? S.carrera(y.carrera_id).corto : y.fecha_preinscripcion;
+      return (a > b ? 1 : a < b ? -1 : 0) * st.dir;
+    });
+    return out;
+  }
+
+  function docsCell(a) {
+    var d = S.docsResumen(a);
+    var icon = d.tone === 'green' ? 'circle-check' : d.tone === 'red' ? 'circle-x' : 'circle-dot';
+    var txt = d.tone === 'red' ? d.rechazados + ' observado' + (d.rechazados > 1 ? 's' : '') : d.aprobados + '/' + d.total + ' verificados';
+    return '<span class="docs text-' + d.tone + '"><i data-lucide="' + icon + '"></i>' + txt + '</span>';
+  }
+
+  function render() {
+    renderKpis();
+    var list = filtered();
+    var pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (st.page > pages) st.page = pages;
+    var slice = list.slice((st.page - 1) * PER_PAGE, st.page * PER_PAGE);
+
+    $('rows').innerHTML = slice.length ? slice.map(function (a) {
+      var c = S.carrera(a.carrera_id), next = S.TRANSICIONES[a.estado];
+      var canOk = next.indexOf('confirmado') >= 0 && S.docsResumen(a).aprobados === a.documentos.length;
+      var canNo = next.indexOf('rechazado') >= 0;
+      return '<tr data-id="' + a.id + '"' + (st.sel[a.id] ? ' class="sel"' : '') + '>' +
+        '<td class="c-check"><input type="checkbox" data-check="' + a.id + '"' + (st.sel[a.id] ? ' checked' : '') + ' aria-label="Seleccionar ' + S.esc(a.nombre + ' ' + a.apellido) + '"></td>' +
+        '<td><div class="who"><span class="avatar">' + S.iniciales(a) + '</span><div style="min-width:0"><strong>' + S.esc(a.nombre + ' ' + a.apellido) + '</strong><small><span class="num">DNI ' + S.fDni(a.dni) + '</span> · ' + S.esc(a.email) + '</small></div></div></td>' +
+        '<td style="min-width:160px">' + S.esc(c.corto) + '<div class="id">' + a.id + '</div></td>' +
+        '<td class="num" style="white-space:nowrap">' + S.fFecha(a.fecha_preinscripcion) + '<div class="subtle" style="font-size:12px">' + S.fHora(a.fecha_preinscripcion) + ' h</div></td>' +
+        '<td>' + docsCell(a) + '</td>' +
+        '<td>' + UI.pill(a.estado) + '</td>' +
+        '<td><div class="row-actions">' +
+          '<button class="btn qa qa-ok" data-act="confirmado" title="' + (canOk ? 'Confirmar inscripción' : 'Para confirmar, toda la documentación debe estar verificada') + '" aria-label="Confirmar"' + (canOk ? '' : ' disabled') + '><i data-lucide="check"></i></button>' +
+          '<button class="btn qa qa-no" data-act="rechazado" title="Rechazar" aria-label="Rechazar"' + (canNo ? '' : ' disabled') + '><i data-lucide="x"></i></button>' +
+          '<a class="btn btn-sm" href="aspirante.html#' + a.id + '">Ficha <i data-lucide="chevron-right" class="i-sm"></i></a>' +
+        '</div></td></tr>';
+    }).join('') : '<tr><td colspan="7"><div class="empty"><strong>No hay aspirantes con esos filtros</strong>Probá con otra búsqueda o quitá algún filtro.</div></td></tr>';
+
+    $('count').textContent = list.length + (list.length === 1 ? ' resultado' : ' resultados') + ' · Actualizado hoy, ' + S.fHora(S.HOY);
+    var from = list.length ? (st.page - 1) * PER_PAGE + 1 : 0;
+    $('pager-txt').textContent = 'Mostrando ' + from + '–' + Math.min(st.page * PER_PAGE, list.length) + ' de ' + list.length;
+    var html = '<button class="arrow" data-page="' + (st.page - 1) + '"' + (st.page === 1 ? ' disabled' : '') + ' aria-label="Anterior"><i data-lucide="chevron-left" class="i-sm"></i></button>';
+    for (var p = 1; p <= pages; p++) {
+      if (pages > 7 && p > 2 && p < pages - 1 && Math.abs(p - st.page) > 1) { if (!html.endsWith('…</button>')) html += '<button disabled>…</button>'; continue; }
+      html += '<button data-page="' + p + '"' + (p === st.page ? ' aria-current="page"' : '') + '>' + p + '</button>';
+    }
+    html += '<button class="arrow" data-page="' + (st.page + 1) + '"' + (st.page === pages ? ' disabled' : '') + ' aria-label="Siguiente"><i data-lucide="chevron-right" class="i-sm"></i></button>';
+    $('pages').innerHTML = html;
+
+    // chips de filtros activos
+    var chips = [];
+    if (st.estado) chips.push(['estado', S.ESTADOS[st.estado].label]);
+    if (st.carrera) chips.push(['carrera', S.carrera(+st.carrera).corto]);
+    if (st.docs) chips.push(['docs', $('f-docs').selectedOptions[0].textContent]);
+    if (st.q) chips.push(['q', '“' + st.q + '”']);
+    $('chips').innerHTML = chips.map(function (c) { return '<button class="fchip" data-clear="' + c[0] + '">' + S.esc(c[1]) + ' <i data-lucide="x"></i></button>'; }).join('');
+
+    var nSel = Object.keys(st.sel).length;
+    $('bulk').hidden = !nSel;
+    $('bulk-n').textContent = nSel + (nSel === 1 ? ' seleccionado' : ' seleccionados');
+    $('all').checked = slice.length > 0 && slice.every(function (a) { return st.sel[a.id]; });
+    UI.icons();
+  }
+
+  // ---- Eventos ----
+  $('q').addEventListener('input', function () { st.q = this.value.trim(); st.page = 1; render(); });
+  $('f-estado').addEventListener('change', function () { st.estado = this.value; st.page = 1; render(); });
+  $('f-carrera').addEventListener('change', function () { st.carrera = this.value; st.page = 1; render(); });
+  $('f-docs').addEventListener('change', function () { st.docs = this.value; st.page = 1; render(); });
+  $('chips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-clear]'); if (!b) return;
+    var k = b.dataset.clear; st[k] = '';
+    ({ estado: $('f-estado'), carrera: $('f-carrera'), docs: $('f-docs'), q: $('q') })[k].value = '';
+    render();
+  });
+  $('pages').addEventListener('click', function (e) { var b = e.target.closest('[data-page]'); if (b && !b.disabled) { st.page = +b.dataset.page; render(); } });
+  document.querySelector('thead').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sort]'); if (!b) return;
+    if (st.sort === b.dataset.sort) st.dir *= -1; else { st.sort = b.dataset.sort; st.dir = b.dataset.sort === 'fecha' ? -1 : 1; }
+    render();
+  });
+  $('all').addEventListener('change', function () {
+    var list = filtered().slice((st.page - 1) * PER_PAGE, st.page * PER_PAGE), on = this.checked;
+    list.forEach(function (a) { if (on) st.sel[a.id] = 1; else delete st.sel[a.id]; });
+    render();
+  });
+  $('bulk').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bulk]'); if (!b) return;
+    var ids = Object.keys(st.sel);
+    if (b.dataset.bulk === 'clear') { st.sel = {}; render(); return; }
+    if (b.dataset.bulk === 'export') { UI.toast('Se exportarían ' + ids.length + ' aspirantes a CSV (mockup)'); return; }
+    var n = 0;
+    ids.forEach(function (id) { var a = A.filter(function (x) { return x.id === id; })[0]; if (S.TRANSICIONES[a.estado].indexOf('en_revision') >= 0) { a.estado = 'en_revision'; n++; } });
+    st.sel = {}; render();
+    UI.toast(n + ' solicitudes pasaron a En revisión' + (n < ids.length ? ' · ' + (ids.length - n) + ' no admitían el cambio' : ''));
+  });
+  $('export').addEventListener('click', function () { UI.toast('Se exportaría el listado filtrado a CSV (mockup)'); });
+
+  $('rows').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    var a = A.filter(function (x) { return x.id === tr.dataset.id; })[0];
+    var chk = e.target.closest('[data-check]');
+    if (chk) { if (chk.checked) st.sel[a.id] = 1; else delete st.sel[a.id]; render(); return; }
+    if (e.target.closest('td.c-check')) return;
+    var act = e.target.closest('[data-act]');
+    if (act) { resolver(a, act.dataset.act); return; }
+    if (e.target.closest('a')) return;
+    location.href = 'aspirante.html#' + a.id;
+  });
+
+  function resolver(a, estado) {
+    var rech = estado === 'rechazado';
+    UI.modal({
+      title: (rech ? 'Rechazar la solicitud de ' : 'Confirmar la inscripción de ') + a.nombre + ' ' + a.apellido,
+      text: a.id + ' · ' + S.carrera(a.carrera_id).corto,
+      body: '<div class="field"><label for="m-obs">Observaciones' + (rech ? ' <span class="req">*</span>' : '') + '</label><textarea class="control" id="m-obs" placeholder="' + (rech ? 'Motivo del rechazo. Se envía al aspirante por correo.' : 'Opcional. Queda registrado en el historial.') + '"></textarea><span class="error">Indicá el motivo del rechazo.</span></div>' +
+        '<div class="notice"><i data-lucide="history"></i><span>Queda registrado quién resolvió y cuándo.</span></div>',
+      confirm: rech ? 'Rechazar solicitud' : 'Confirmar inscripción',
+      tone: rech ? 'btn-danger' : 'btn-success',
+      onConfirm: function (m) {
+        var obs = m.querySelector('#m-obs').value.trim();
+        if (rech && !obs) { m.querySelector('.field').classList.add('invalid'); return false; }
+        a.estado = estado; a.observaciones = obs; a.revisor = S.USUARIO_ACTUAL; a.fecha_revision = new Date();
+        render(); UI.toast(rech ? 'Solicitud rechazada' : 'Inscripción confirmada');
+      }
+    });
+  }
+
+  // Accesos desde la barra lateral
+  function fromHash() {
+    var h = location.hash.slice(1);
+    if (h === 'docs') { st.docs = 'pendiente'; st.estado = ''; }
+    else if (h === 'espera') { st.estado = 'lista_espera'; st.docs = ''; }
+    $('f-docs').value = st.docs; $('f-estado').value = st.estado; st.page = 1;
+    render();
+  }
+  window.addEventListener('hashchange', fromHash);
+  renderQuotas();
+  fromHash();
+})();
+</script>
+</body>
+</html>
