@@ -1,0 +1,1797 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGA Mapa de datos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: lienzo navegable con las tablas agrupadas por módulo; índice a la izquierda, ficha de la tabla a la derecha. */
+:root {
+  --bg: #eceef2;          /* lienzo */
+  --dots: #cdd2db;
+  --panel: #f8f9fb;
+  --card: #ffffff;
+  --ink: #16202e;
+  --muted: #5d6878;
+  --faint: #8d96a5;
+  --line: #d8dde5;
+  --accent: #2c55c9;
+  --warn: #b66a00;
+  --warn-bg: #fff3dc;
+  --shadow: 0 1px 2px rgba(22, 32, 46, .06), 0 4px 14px -6px rgba(22, 32, 46, .14);
+  --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --dots: #222a36; --panel: #141a23; --card: #19202b; --ink: #e5e9ef; --muted: #9ba5b4; --faint: #6f7a8a;
+    --line: #2a3341; --accent: #7d9cff; --warn: #f0b04a; --warn-bg: #3a2c12;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px -8px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --dots: #222a36; --panel: #141a23; --card: #19202b; --ink: #e5e9ef; --muted: #9ba5b4; --faint: #6f7a8a;
+  --line: #2a3341; --accent: #7d9cff; --warn: #f0b04a; --warn-bg: #3a2c12;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px -8px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, input { font: inherit; color: inherit; }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+
+/* ---------- Barra superior ---------- */
+.bar { display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); min-width: 0; }
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+.brand span { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stats { display: flex; gap: 14px; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.stats b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar .grow { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); cursor: pointer; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.btn:hover { border-color: var(--faint); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.btn svg { width: 15px; height: 15px; }
+.only-mobile { display: none; }
+.src { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.src.imp { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Índice lateral ---------- */
+.body { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: 0; }
+.side { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-right: 1px solid var(--line); }
+.search { padding: 12px 12px 8px; }
+.search input { width: 100%; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); }
+.search input::placeholder { color: var(--faint); }
+.tabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.tabs button { border: 0; background: none; padding: 8px 10px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.tabs .n { font-size: 11px; color: var(--faint); margin-left: 3px; }
+.list { overflow-y: auto; padding: 8px 8px 24px; min-height: 0; flex: 1; }
+.mod { margin-top: 10px; }
+.mod-h { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; background: none; cursor: pointer; text-align: left; border-radius: 6px; }
+.mod-h:hover { background: color-mix(in srgb, var(--m) 10%, transparent); }
+.mod-h i { width: 10px; height: 10px; border-radius: 3px; background: var(--m); flex: none; }
+.mod-h b { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: var(--muted); flex: 1; }
+.mod-h small { color: var(--faint); font-size: 11.5px; }
+.item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px 5px 26px; border: 0; background: none; cursor: pointer; text-align: left; border-radius: 6px; font-family: var(--mono); font-size: 12.5px; }
+.item:hover { background: var(--card); }
+.item[aria-current="true"] { background: color-mix(in srgb, var(--m) 16%, var(--card)); }
+.item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item small { color: var(--faint); font-size: 11px; }
+.item .wdot { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+.hit { display: block; padding: 0 8px 4px 26px; color: var(--muted); font-size: 11.5px; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hit mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; border-radius: 2px; }
+.empty { padding: 24px 12px; color: var(--muted); font-size: 13px; }
+
+.tour-item { display: grid; gap: 2px; width: 100%; text-align: left; padding: 12px; margin-bottom: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+.tour-item:hover { border-color: var(--faint); }
+.tour-item b { font-size: 14px; font-weight: 600; }
+.tour-item span { color: var(--muted); font-size: 12.5px; }
+.tour-item .path { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.tour-item .path i { width: 8px; height: 8px; border-radius: 2px; background: var(--m); }
+
+.note { display: grid; gap: 6px; padding: 10px 12px; margin-bottom: 8px; border-radius: 10px; background: var(--warn-bg); color: var(--ink); font-size: 13px; }
+.note .who { display: flex; justify-content: space-between; gap: 8px; }
+.note .who button { border: 0; background: none; padding: 0; cursor: pointer; font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--warn); }
+.note code { background: color-mix(in srgb, var(--warn) 14%, transparent); padding: 0 3px; border-radius: 3px; }
+.side-foot { padding: 10px 12px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
+
+/* ---------- Lienzo ---------- */
+.stage { position: relative; overflow: hidden; min-height: 0; touch-action: none; cursor: grab;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dots) 1px, transparent 1.2px);
+  background-size: 22px 22px; }
+.stage.panning { cursor: grabbing; }
+.world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+#wires { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+
+.region rect { fill: color-mix(in srgb, var(--m) 5%, transparent); stroke: color-mix(in srgb, var(--m) 35%, transparent); stroke-dasharray: 4 5; }
+.region text { fill: var(--m); font: 600 13px var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.region text.sub { fill: var(--faint); font: 500 11.5px var(--sans); letter-spacing: 0; text-transform: none; }
+.region { transition: opacity .25s; }
+.region.dim { opacity: .35; }
+
+.edge { transition: opacity .25s; }
+.edge .wire { fill: none; stroke: var(--m); stroke-width: 1.4; opacity: .5; }
+.edge .ends { fill: none; stroke: var(--m); stroke-width: 1.4; opacity: .7; }
+.edge .opt { fill: var(--card); stroke: var(--m); stroke-width: 1.4; }
+.edge.on .wire { opacity: 1; stroke-width: 2.4; stroke-dasharray: 7 5; animation: flow 1s linear infinite; }
+.edge.on .ends { opacity: 1; stroke-width: 2; }
+.edge.dim { opacity: .07; }
+@keyframes flow { to { stroke-dashoffset: -12; } }
+
+.tbl { position: absolute; width: 252px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); font-family: var(--mono); cursor: pointer; transition: opacity .25s, box-shadow .2s, border-color .2s; user-select: none; -webkit-user-select: none; }
+.tbl:hover { border-color: color-mix(in srgb, var(--m) 60%, var(--line)); }
+.tbl.sel { border-color: var(--m); box-shadow: 0 0 0 2px var(--m), var(--shadow); }
+.tbl.match { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.tbl.dim { opacity: .2; }
+.tbl.dragging { cursor: grabbing; box-shadow: 0 14px 30px -10px rgba(0,0,0,.35); z-index: 5; }
+.th { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 9px 9px 0 0; background: color-mix(in srgb, var(--m) 14%, var(--card)); border-bottom: 1px solid color-mix(in srgb, var(--m) 28%, var(--line)); }
+.th i { width: 8px; height: 8px; border-radius: 2px; background: var(--m); flex: none; }
+.th b { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.th small { font-size: 11px; color: var(--muted); }
+.th .wdot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 25%, transparent); }
+.rows { list-style: none; margin: 0; padding: 4px 0; }
+.rows li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 6px; align-items: center; height: 23px; padding: 0 10px; font-size: 11.5px; }
+.rows li .cn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rows li .ct { color: var(--faint); font-size: 10.5px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rows li.hot { background: color-mix(in srgb, var(--m) 16%, transparent); }
+.rows li.more { display: block; color: var(--faint); font-size: 11px; font-family: var(--sans); height: 22px; line-height: 22px; }
+.k { font-size: 9px; font-weight: 600; letter-spacing: .04em; border-radius: 3px; padding: 1px 3px; text-align: center; line-height: 1.3; }
+.k.pk { background: var(--ink); color: var(--card); }
+.k.fk { border: 1px solid var(--muted); color: var(--muted); }
+.k.uq { color: var(--faint); }
+
+/* Controles flotantes del lienzo */
+.hint { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); padding: 7px 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--muted); font-size: 12.5px; white-space: nowrap; pointer-events: none; transition: opacity .3s; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
+.legend { position: absolute; left: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 3px; padding: 8px 10px; font-size: 11.5px !important; border-radius: 10px; background: color-mix(in srgb, var(--card) 92%, transparent); border: 1px solid var(--line); font-size: 12px; color: var(--muted); box-shadow: var(--shadow); }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.legend svg { width: 36px; height: 14px; color: var(--ink); flex: none; }
+.zoom { position: absolute; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 4px; align-items: center; padding: 4px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.zoom button { width: 30px; height: 30px; border: 0; background: none; border-radius: 6px; cursor: pointer; display: grid; place-items: center; }
+.zoom button:hover { background: var(--panel); }
+.zoom span { min-width: 44px; text-align: center; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.zoom svg { width: 16px; height: 16px; }
+
+/* Recorrido guiado */
+.tour { position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(560px, calc(100% - 32px)); padding: 16px 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 18px 50px -14px rgba(0,0,0,.35); z-index: 10; }
+.tour .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; }
+.tour .top b { color: var(--ink); font-weight: 600; }
+.tour p { margin: 8px 0 12px; font-size: 14.5px; line-height: 1.55; text-wrap: pretty; }
+.tour .nav { display: flex; align-items: center; gap: 8px; }
+.tour .dots { display: flex; gap: 5px; flex: 1; }
+.tour .dots i { width: 18px; height: 4px; border-radius: 2px; background: var(--line); }
+.tour .dots i.on { background: var(--ink); }
+.tour .x { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 2px; display: grid; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 0 6px; border-radius: 5px; border: 0; cursor: pointer; font-family: var(--mono); font-size: .88em; font-weight: 600; background: color-mix(in srgb, var(--m) 15%, transparent); color: var(--ink); line-height: 1.5; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--m); }
+.chip:hover { background: color-mix(in srgb, var(--m) 26%, transparent); }
+
+/* ---------- Ficha de tabla ---------- */
+.drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--panel); border-left: 1px solid var(--line); box-shadow: -18px 0 40px -24px rgba(0,0,0,.35); display: flex; flex-direction: column; z-index: 20; transform: translateX(0); transition: transform .25s; }
+.drawer.closed { transform: translateX(105%); }
+.d-head { padding: 16px 18px 14px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--m) 9%, var(--panel)); }
+.d-head .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.d-head .mod-name { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.d-head .mod-name i { width: 9px; height: 9px; border-radius: 2px; background: var(--m); }
+.d-head h2 { margin: 6px 0 4px; font: 600 20px var(--mono); letter-spacing: -.01em; overflow-wrap: anywhere; }
+.d-head p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.d-head .icons { display: flex; gap: 4px; }
+.icon-btn { width: 30px; height: 30px; border: 0; background: none; border-radius: 6px; cursor: pointer; display: grid; place-items: center; color: var(--muted); }
+.icon-btn:hover { background: var(--card); color: var(--ink); }
+.icon-btn svg { width: 17px; height: 17px; }
+.d-body { overflow-y: auto; padding: 4px 18px 32px; flex: 1; }
+.d-sec { margin-top: 18px; }
+.d-sec h3 { margin: 0 0 8px; font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+.rel { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.rel:first-of-type { border-top: 0; }
+.rel .arrow { color: var(--faint); font-family: var(--mono); padding-top: 1px; }
+.rel small { display: block; color: var(--faint); font-family: var(--mono); font-size: 11.5px; margin-top: 2px; }
+.cols { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cols td { padding: 7px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.cols tr:first-child td { border-top: 0; }
+.cols td:first-child { width: 48%; padding-right: 10px; }
+.cols .nm { font-family: var(--mono); font-weight: 500; overflow-wrap: anywhere; }
+.cols .ty { font-family: var(--mono); color: var(--muted); }
+.badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.badge { font-size: 10.5px; font-weight: 600; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); line-height: 1.6; }
+.badge.pk { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.badge.fk { border-color: color-mix(in srgb, var(--m) 50%, var(--line)); color: var(--ink); cursor: pointer; background: color-mix(in srgb, var(--m) 10%, transparent); }
+.enum { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+.enum span { font-family: var(--mono); font-size: 11px; padding: 0 5px; border-radius: 4px; background: var(--card); border: 1px solid var(--line); }
+.enum span.def { border-color: var(--ink); }
+.dflt { display: block; color: var(--faint); font-size: 11.5px; margin-top: 3px; }
+.idx { font-family: var(--mono); font-size: 12px; padding: 6px 0; border-top: 1px solid var(--line); color: var(--muted); }
+.idx:first-of-type { border-top: 0; }
+
+.drop { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 80%, transparent); border: 2px dashed var(--accent); z-index: 30; font-size: 15px; font-weight: 600; }
+.toast { position: absolute; left: 50%; top: 14px; transform: translate(-50%, -8px); opacity: 0; padding: 8px 14px; border-radius: 8px; background: var(--ink); color: var(--panel); font-size: 13px; z-index: 40; transition: opacity .2s, transform .2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 1100px) { .stats { display: none; } }
+@media (max-width: 820px) {
+  .body { grid-template-columns: minmax(0, 1fr); }
+  .side { position: absolute; z-index: 25; top: 0; bottom: 0; left: 0; width: min(320px, 88%); transform: translateX(-102%); transition: transform .25s; box-shadow: 18px 0 40px -20px rgba(0,0,0,.4); }
+  .body { position: relative; }
+  .app.side-open .side { transform: none; }
+  .only-mobile { display: inline-flex; }
+  .brand span, .bar .hide-sm { display: none; }
+  .legend { display: none; }
+  .drawer { top: auto; height: 72%; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; }
+  .drawer.closed { transform: translateY(105%); }
+  .tour { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="bar">
+    <button class="btn only-mobile" id="side-btn" aria-label="Abrir índice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <div class="brand"><h1>SIGA · Mapa de datos</h1><span id="proj"></span></div>
+    <span class="src hide-sm" id="src"></span>
+    <div class="stats" id="stats"></div>
+    <div class="grow"></div>
+    <button class="btn hide-sm" id="cols-btn" aria-pressed="false" title="Mostrar todas las columnas en el mapa">Todas las columnas</button>
+    <button class="btn" id="load-btn" title="Importar el archivo del modelo (.txt o .dbml). También podés arrastrarlo al lienzo."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 0-4 4m4-4 4 4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Importar</button>
+    <button class="btn hide-sm" id="orig-btn" hidden title="Volver al modelo que viene incluido en la página">Usar el original</button>
+    <input type="file" id="file" accept=".txt,.dbml,text/plain" hidden>
+  </header>
+
+  <div class="body">
+    <aside class="side" id="side">
+      <div class="search"><input id="q" type="search" placeholder="Buscar tabla, columna o valor…" aria-label="Buscar en el modelo" autocomplete="off"></div>
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="mods" aria-selected="true">Tablas</button>
+        <button role="tab" data-tab="tours" aria-selected="false">Recorridos</button>
+        <button role="tab" data-tab="notes" aria-selected="false">Revisión<span class="n" id="n-notes"></span></button>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Ctrl + rueda o pellizco para el zoom.</div>
+    </aside>
+
+    <main class="stage" id="stage" aria-label="Diagrama del modelo de datos">
+      <div class="world" id="world">
+        <svg id="wires" width="1" height="1" aria-hidden="true"></svg>
+        <div id="nodes"></div>
+      </div>
+
+      <div class="hint" id="hint">Tocá una tabla para ver con qué se conecta, o seguí un recorrido guiado.</div>
+
+      <div class="legend" id="legend" aria-label="Referencias">
+        <div><svg viewBox="0 0 44 14"><path d="M2 7h40M2 7l10-5M2 7l10 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>muchos</div>
+        <div><svg viewBox="0 0 44 14"><path d="M2 7h40M34 2v10M38 2v10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>exactamente uno</div>
+        <div><svg viewBox="0 0 44 14"><path d="M2 7h40M38 2v10" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="30" cy="7" r="3.5" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/></svg>uno o ninguno</div>
+        <div><svg viewBox="0 0 44 14"><path d="M2 7h40" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4"/><path d="M36 3l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>apunta hacia la tabla referenciada</div>
+      </div>
+
+      <div class="zoom">
+        <button id="z-out" aria-label="Alejar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+        <span id="z-val">100%</span>
+        <button id="z-in" aria-label="Acercar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button id="z-fit" aria-label="Ver todo" title="Ver todo (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/></svg></button>
+        <button id="z-reset" aria-label="Reacomodar" title="Volver al orden original"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
+      </div>
+
+      <section class="tour" id="tour" hidden aria-live="polite"></section>
+
+      <aside class="drawer closed" id="drawer" aria-label="Detalle de la tabla"></aside>
+      <div class="drop" id="drop" hidden>Soltá el archivo del modelo para importarlo</div>
+      <div class="toast" id="toast" role="status"></div>
+    </main>
+  </div>
+</div>
+
+<!-- Modelo en formato DBML. Es una copia de modelo_base_de_datos.txt: si el modelo cambia, se reemplaza este bloque o se usa "Cargar modelo". -->
+<script type="text/plain" id="dbml">
+Project universite_db {
+  database_type: "MySQL"
+  Note: "Sistema de Registro Académico Universitario"
+}
+
+
+// ============================================================
+// MÓDULO 1: AUTENTICACIÓN Y ROLES
+// ============================================================
+
+Table roles {
+  id_rol int [pk, increment]
+  nombre_rol varchar(50) [not null, unique]
+  descripcion varchar(255)
+}
+
+Table usuarios {
+  id_usuario int [pk, increment]
+  id_rol int [not null]
+  email varchar(120) [not null, unique]
+  password varchar(255) [not null]
+  nombre varchar(100) [not null]
+  apellido varchar(100) [not null]
+  dni int [not null, unique]
+  fecha_nacimiento date [not null]
+  telefono varchar(30)
+  estado enum("activo", "inactivo", "bloqueado") [default: "activo"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    id_rol
+  }
+}
+
+Table usuario_roles {
+  id_usuario int [not null]
+  id_rol int [not null]
+  activo boolean [not null, default: true]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_usuario, id_rol) [pk]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 2: ESTRUCTURA ACADÉMICA
+// ============================================================
+
+Table carreras {
+  id_carrera int [pk, increment]
+  codigo varchar(20) [not null, unique]
+  nombre_carrera varchar(150) [not null]
+  duracion_anios int [not null, default: 3]
+  descripcion text
+  estado enum("activa", "inactiva") [default: "activa"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table planes_estudio {
+  id_plan_estudio int [pk, increment]
+  id_carrera int [not null]
+  codigo_plan varchar(30) [not null]
+  nombre varchar(150) [not null]
+  resolucion varchar(100)
+  anio_inicio int [not null]
+  anio_fin int
+  estado enum("activo", "inactivo", "obsoleto") [default: "activo"]
+  es_vigente_inscripcion boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_carrera, codigo_plan) [unique]
+  }
+}
+
+Table materias {
+  id_materia int [pk, increment]
+  id_carrera int [not null]
+  codigo_materia varchar(20) [not null]
+  nombre_materia varchar(150) [not null]
+  tipo_materia enum("anual", "cuatrimestral") [not null, default: "cuatrimestral"]
+  anio_cursada int [not null, default: 1]
+  cuatrimestre int [not null, default: 1]
+  promocionable enum("si", "no") [default: "si"]
+  estado enum("activa", "inactiva") [default: "activa"]
+  resolucion varchar(20) [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    id_carrera
+    codigo_materia
+  }
+}
+
+Table plan_materias {
+  id_plan_materia int [pk, increment]
+  id_plan_estudio int [not null]
+  id_materia int [not null]
+  anio_cursada int [not null, default: 1]
+  cuatrimestre int [not null, default: 1]
+  es_optativa boolean [default: false]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_plan_estudio, id_materia) [unique]
+  }
+}
+
+Table periodos_inscripcion {
+  id_periodo_inscripcion int [pk, increment]
+  codigo_periodo varchar(30) [not null, unique]
+  nombre varchar(150) [not null]
+  ciclo_lectivo int [not null]
+  fecha_inicio datetime [not null]
+  fecha_fin datetime [not null]
+  estado enum("programado", "abierto", "cerrado", "finalizado") [default: "programado"]
+  descripcion text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table periodo_carrera_planes {
+  id_periodo_carrera_plan int [pk, increment]
+  id_periodo_inscripcion int [not null]
+  id_carrera int [not null]
+  id_plan_estudio int [not null]
+  cupo_preinscriptos int [not null, default: 0]
+  cupo_lista_espera int [not null, default: 0]
+  fecha_inicio datetime
+  fecha_fin datetime
+  estado enum("activa", "cupo_cubierto", "lista_espera_cubierta", "cerrada") [default: "activa"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_periodo_inscripcion, id_carrera, id_plan_estudio) [unique]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 3: ESTUDIANTES Y PREINSCRIPCIONES
+// ============================================================
+
+Table estudiantes {
+  id_estudiante int [pk, increment]
+  id_usuario int [not null, unique]
+  legajo varchar(30) [not null, unique]
+  id_carrera int [not null]
+  id_plan_estudio int
+  fecha_ingreso date [not null]
+  situacion_academica enum(
+    "preinscripto",
+    "inscripto",
+    "regular",
+    "recibido",
+    "suspendido",
+    "baja"
+  ) [default: "preinscripto"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table preinscripciones {
+  id_preinscripcion int [pk, increment]
+  id_periodo_carrera_plan int [not null]
+  id_usuario int [not null]
+  id_estudiante int
+  fecha_preinscripcion datetime [not null, default: `CURRENT_TIMESTAMP`]
+  estado enum(
+    "preinscripto",
+    "lista_espera",
+    "en_revision",
+    "confirmado",
+    "rechazado",
+    "cancelado"
+  ) [not null, default: "preinscripto"]
+  observaciones text
+  id_usuario_revisor int
+  fecha_revision datetime
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_usuario, id_periodo_carrera_plan) [unique]
+  }
+}
+
+Table documentos_estudiantes {
+  id_documento int [pk, increment]
+  id_estudiante int [not null]
+  id_preinscripcion int
+  tipo_documento enum(
+    "DNI",
+    "Titulo Secundario",
+    "Analitico",
+    "Foto Carnet",
+    "Otro"
+  ) [not null]
+  nombre_archivo varchar(255) [not null]
+  ruta_archivo varchar(255) [not null]
+  estado_verificacion enum(
+    "pendiente",
+    "aprobado",
+    "rechazado"
+  ) [default: "pendiente"]
+  observaciones text
+  id_usuario_verificador int
+  fecha_verificacion datetime
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table historial_cambios_plan {
+  id_cambio_plan int [pk, increment]
+  id_estudiante int [not null]
+  id_plan_anterior int [not null]
+  id_plan_nuevo int [not null]
+  motivo text
+  fecha_cambio datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table configuraciones_cursada {
+  id_configuracion int [pk, increment]
+  id_materia int
+  porcentaje_asistencia_minima decimal(5,2) [not null, default: 75.00]
+  nota_minima_regular decimal(4,2) [not null, default: 4.00]
+  permite_promocion boolean [not null, default: true]
+  nota_minima_promocion decimal(4,2) [not null, default: 7.00]
+  meses_vigencia_regularidad int [not null, default: 24]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+
+// ============================================================
+// MÓDULO 4: CURSADAS, EVALUACIONES Y CALIFICACIONES
+// ============================================================
+
+Table cursadas {
+  id_cursada int [pk, increment]
+  id_estudiante int [not null]
+  id_materia int [not null]
+  id_plan_estudio int [not null]
+  ciclo_lectivo int [not null]
+  periodo enum(
+    "1er Cuatrimestre",
+    "2do Cuatrimestre",
+    "Anual"
+  ) [not null, default: "1er Cuatrimestre"]
+  estado_cursada enum(
+    "cursando",
+    "regular",
+    "libre",
+    "promocionado",
+    "aprobado"
+  ) [default: "cursando"]
+  fecha_inscripcion timestamp [default: `CURRENT_TIMESTAMP`]
+  fecha_registro_estado datetime
+  fecha_vencimiento_estado date
+
+  indexes {
+    (id_estudiante, id_materia, ciclo_lectivo) [unique]
+  }
+}
+
+Table evaluaciones {
+  id_evaluacion int [pk, increment]
+  id_materia int [not null]
+  id_asignacion int [not null]
+  ciclo_lectivo int [not null]
+  periodo enum(
+    "1er Cuatrimestre",
+    "2do Cuatrimestre",
+    "Anual"
+  ) [not null]
+  tipo_evaluacion enum(
+    "Parcial",
+    "Recuperatorio",
+    "Examen Final",
+    "Trabajo Práctico",
+    "Coloquio"
+  ) [not null]
+  numero_instancia int [not null, default: 1]
+  id_evaluacion_origen int
+  fecha_evaluacion date [not null]
+  descripcion varchar(255)
+  estado enum(
+    "programada",
+    "realizada",
+    "cancelada"
+  ) [not null, default: "programada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_materia, ciclo_lectivo, periodo, tipo_evaluacion, numero_instancia) [unique]
+  }
+}
+
+Table calificaciones {
+  id_calificacion int [pk, increment]
+  id_cursada int [not null]
+  id_evaluacion int [not null]
+  estado enum(
+    "pendiente",
+    "presente",
+    "ausente",
+    "impugnada"
+  ) [not null, default: "pendiente"]
+  nota decimal(4,2)
+  observaciones varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_cursada, id_evaluacion) [unique]
+  }
+}
+
+Table correlatividades {
+  id_correlatividad int [pk, increment]
+  id_plan_estudio int [not null]
+  id_materia int [not null]
+  id_materia_correlativa int [not null]
+  contexto_requisito enum("cursada", "final") [not null, default: "cursada"]
+  tipo_requisito enum(
+    "Cursada aprobada",
+    "Acreditada"
+  ) [not null, default: "Cursada aprobada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (
+      id_plan_estudio,
+      id_materia,
+      id_materia_correlativa,
+      contexto_requisito
+    ) [unique]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 5: DOCENTES, CLASES Y ASISTENCIA
+// ============================================================
+
+Table docentes {
+  id_docente int [pk, increment]
+  id_usuario int [not null, unique]
+  legajo_docente varchar(30) [not null, unique]
+  titulo_academico varchar(100)
+  estado enum("activo", "inactivo", "licencia") [default: "activo"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table asignaciones_docentes {
+  id_asignacion int [pk, increment]
+  id_docente int [not null]
+  id_materia int [not null]
+  ciclo_lectivo int [not null]
+  periodo enum(
+    "1er Cuatrimestre",
+    "2do Cuatrimestre",
+    "Anual"
+  ) [not null]
+  rol_docente enum(
+    "Titular",
+    "Adjunto",
+    "JTP",
+    "Auxiliar"
+  ) [default: "Titular"]
+  fecha_asignacion timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_docente, id_materia, ciclo_lectivo, periodo) [unique]
+  }
+}
+
+Table justificaciones_inasistencia {
+  id_justificacion int [pk, increment]
+  id_estudiante int [not null]
+  id_usuario_administrativo int [not null]
+  fecha_inicio date [not null]
+  fecha_fin date [not null]
+  motivo enum(
+    "Salud",
+    "Atención familiar",
+    "Laboral",
+    "Trámite oficial",
+    "Otro"
+  ) [not null]
+  observaciones text
+  estado enum(
+    "Aprobada",
+    "Pendiente",
+    "Rechazada"
+  ) [default: "Aprobada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table clases {
+  id_clase int [pk, increment]
+  id_materia int [not null]
+  id_docente int [not null]
+  ciclo_lectivo int [not null]
+  fecha date [not null]
+  tema_tratado varchar(255)
+  estado enum(
+    "dictada",
+    "cancelada",
+    "reprogramada"
+  ) [default: "dictada"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table asistencias {
+  id_asistencia int [pk, increment]
+  id_clase int [not null]
+  id_estudiante int [not null]
+  estado enum(
+    "Presente",
+    "Ausente",
+    "Inasistencia Justificada"
+  ) [not null, default: "Presente"]
+  id_justificacion int
+  observaciones varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (id_clase, id_estudiante) [unique]
+  }
+}
+
+
+// ============================================================
+// MÓDULO 8: CONSTANCIAS ESTUDIANTILES
+// ============================================================
+
+Table constancias_estudiantes {
+  id_constancia int [pk, increment]
+  id_estudiante int [not null]
+  tipo_constancia enum(
+    "Alumno Regular",
+    "Examen Rendido",
+    "Materias Aprobadas",
+    "Analitico Parcial",
+    "Inscripcion a Carrera",
+    "Finalizacion de Estudios",
+    "Otro"
+  ) [not null]
+  codigo_verificacion varchar(64) [not null, unique]
+  nombre_archivo varchar(255) [not null]
+  ruta_archivo varchar(255) [not null]
+  estado enum(
+    "emitida",
+    "entregada",
+    "anulada"
+  ) [default: "entregada"]
+  observaciones text
+  id_usuario_emisor int
+  fecha_emision datetime [default: `CURRENT_TIMESTAMP`]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+
+// ============================================================
+// MÓDULO 9: ACTAS ACADÉMICAS Y FIRMA DIGITAL
+// ============================================================
+
+Table acta_firmantes {
+  id_firmante int [pk, increment]
+  id_usuario int [not null]
+  cargo_oficial varchar(150) [not null]
+  algoritmo enum(
+    "RSA-2048",
+    "RSA-4096",
+    "ECDSA-P256"
+  ) [not null, default: "RSA-2048"]
+  clave_publica_pem text [not null]
+  huella_clave varchar(64) [not null, unique]
+  certificado_x509_pem text
+  emitido_por varchar(255)
+  valido_desde datetime [not null]
+  valido_hasta datetime
+  estado enum(
+    "activo",
+    "revocado",
+    "vencido"
+  ) [default: "activo"]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table acta_requisitos_firma {
+  id_requisito int [pk, increment]
+  tipo_acta enum(
+    "Examen Final",
+    "Cursada",
+    "Analitico",
+    "Habilitacion"
+  ) [not null]
+  orden int [not null]
+  descripcion_rol varchar(100) [not null]
+  es_obligatoria boolean [not null, default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (tipo_acta, orden) [unique]
+  }
+}
+
+Table actas {
+  id_acta int [pk, increment]
+  id_estudiante int [not null]
+  tipo_acta enum(
+    "Examen Final",
+    "Cursada",
+    "Analitico",
+    "Habilitacion"
+  ) [not null]
+  numero_acta varchar(30) [not null, unique]
+  ciclo_lectivo int [not null]
+  id_materia int
+  id_cursada int
+
+  contenido_json json [not null]
+  hash_sha256 char(64) [not null]
+
+  estado enum(
+    "borrador",
+    "firmada",
+    "anulada",
+    "reemplazada"
+  ) [not null, default: "borrador"]
+
+  id_acta_origen int
+  motivo_correccion text
+
+  id_usuario_creador int [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table acta_firmas {
+  id_firma int [pk, increment]
+  id_acta int [not null]
+  id_firmante int [not null]
+  id_requisito int
+  orden_firma int [not null]
+
+  hash_firmado char(64) [not null]
+  firma_digital_b64 text [not null]
+  algoritmo_usado enum(
+    "RSA-2048",
+    "RSA-4096",
+    "ECDSA-P256"
+  ) [not null]
+
+  timestamp_firma datetime [not null]
+  ip_origen varchar(45)
+  metadatos_extra json
+
+  indexes {
+    (id_acta, id_firmante) [unique]
+  }
+}
+
+Table acta_historial {
+  id_evento int [pk, increment]
+  id_acta int [not null]
+  accion enum(
+    "creacion",
+    "firma",
+    "anulacion",
+    "reemplazo",
+    "reimpresion",
+    "descarga",
+    "verificacion_externa"
+  ) [not null]
+  id_usuario_actor int
+  descripcion text
+  datos_snapshot json
+  ip_origen varchar(45)
+  user_agent varchar(500)
+  timestamp_evento datetime [not null, default: `CURRENT_TIMESTAMP`]
+  hash_evento char(64)
+}
+
+
+// ============================================================
+// RELACIONES
+// ============================================================
+
+// --- Autenticación ---
+
+Ref: usuarios.id_rol > roles.id_rol
+Ref: usuario_roles.id_usuario > usuarios.id_usuario
+Ref: usuario_roles.id_rol > roles.id_rol
+
+
+// --- Estructura académica ---
+
+Ref: planes_estudio.id_carrera > carreras.id_carrera
+
+Ref: materias.id_carrera > carreras.id_carrera
+
+Ref: plan_materias.id_plan_estudio > planes_estudio.id_plan_estudio
+Ref: plan_materias.id_materia > materias.id_materia
+
+Ref: periodo_carrera_planes.id_periodo_inscripcion > periodos_inscripcion.id_periodo_inscripcion
+Ref: periodo_carrera_planes.id_carrera > carreras.id_carrera
+Ref: periodo_carrera_planes.id_plan_estudio > planes_estudio.id_plan_estudio
+
+
+// --- Estudiantes / inscripción ---
+
+Ref: estudiantes.id_usuario - usuarios.id_usuario
+Ref: estudiantes.id_carrera > carreras.id_carrera
+Ref: estudiantes.id_plan_estudio > planes_estudio.id_plan_estudio
+
+Ref: preinscripciones.id_periodo_carrera_plan > periodo_carrera_planes.id_periodo_carrera_plan
+Ref: preinscripciones.id_usuario > usuarios.id_usuario
+Ref: preinscripciones.id_estudiante > estudiantes.id_estudiante
+Ref: preinscripciones.id_usuario_revisor > usuarios.id_usuario
+
+Ref: documentos_estudiantes.id_estudiante > estudiantes.id_estudiante
+Ref: documentos_estudiantes.id_preinscripcion > preinscripciones.id_preinscripcion
+Ref: documentos_estudiantes.id_usuario_verificador > usuarios.id_usuario
+
+Ref: historial_cambios_plan.id_estudiante > estudiantes.id_estudiante
+Ref: historial_cambios_plan.id_plan_anterior > planes_estudio.id_plan_estudio
+Ref: historial_cambios_plan.id_plan_nuevo > planes_estudio.id_plan_estudio
+
+Ref: configuraciones_cursada.id_materia > materias.id_materia
+
+
+// --- Cursadas / evaluaciones ---
+
+Ref: cursadas.id_estudiante > estudiantes.id_estudiante
+Ref: cursadas.id_materia > materias.id_materia
+Ref: cursadas.id_plan_estudio > planes_estudio.id_plan_estudio
+
+Ref: evaluaciones.id_materia > materias.id_materia
+Ref: evaluaciones.id_asignacion > asignaciones_docentes.id_asignacion
+Ref: evaluaciones.id_evaluacion_origen > evaluaciones.id_evaluacion
+
+Ref: calificaciones.id_cursada > cursadas.id_cursada
+Ref: calificaciones.id_evaluacion > evaluaciones.id_evaluacion
+
+Ref: correlatividades.id_plan_estudio > planes_estudio.id_plan_estudio
+Ref: correlatividades.id_materia > materias.id_materia
+Ref: correlatividades.id_materia_correlativa > materias.id_materia
+
+
+// --- Docentes / clases / asistencia ---
+
+Ref: docentes.id_usuario - usuarios.id_usuario
+
+Ref: asignaciones_docentes.id_docente > docentes.id_docente
+Ref: asignaciones_docentes.id_materia > materias.id_materia
+
+Ref: justificaciones_inasistencia.id_estudiante > estudiantes.id_estudiante
+Ref: justificaciones_inasistencia.id_usuario_administrativo > usuarios.id_usuario
+
+Ref: clases.id_materia > materias.id_materia
+Ref: clases.id_docente > docentes.id_docente
+
+Ref: asistencias.id_clase > clases.id_clase
+Ref: asistencias.id_estudiante > estudiantes.id_estudiante
+Ref: asistencias.id_justificacion > justificaciones_inasistencia.id_justificacion
+
+
+// --- Constancias ---
+
+Ref: constancias_estudiantes.id_estudiante > estudiantes.id_estudiante
+Ref: constancias_estudiantes.id_usuario_emisor > usuarios.id_usuario
+
+
+// --- Actas / firma digital ---
+
+Ref: acta_firmantes.id_usuario > usuarios.id_usuario
+
+Ref: actas.id_estudiante > estudiantes.id_estudiante
+Ref: actas.id_materia > materias.id_materia
+Ref: actas.id_cursada > cursadas.id_cursada
+Ref: actas.id_acta_origen > actas.id_acta
+Ref: actas.id_usuario_creador > usuarios.id_usuario
+
+Ref: acta_firmas.id_acta > actas.id_acta
+Ref: acta_firmas.id_firmante > acta_firmantes.id_firmante
+Ref: acta_firmas.id_requisito > acta_requisitos_firma.id_requisito
+
+Ref: acta_historial.id_acta > actas.id_acta
+Ref: acta_historial.id_usuario_actor > usuarios.id_usuario
+
+Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================== Contenido curado ================== */
+
+  // Color por número de módulo (los comentarios "// MÓDULO N: ..." del archivo).
+  var MOD_COLOR = { 1: '#7a5af8', 2: '#0e9384', 3: '#1570ef', 4: '#e04f16', 5: '#099250', 8: '#dd2590', 9: '#b5700a' };
+  var EXTRA_COLORS = ['#4e5ba6', '#0086c9', '#c4320a', '#6172f3', '#3b7c0f'];
+  // Columna del mapa para cada módulo: agrupa a los que más se relacionan entre sí.
+  var MOD_COLUMN = { 1: 0, 9: 0, 3: 1, 8: 1, 2: 2, 4: 3, 5: 4 };
+
+  // Nombre en castellano llano, género y descripción de cada tabla.
+  var META = {
+    roles: ['rol', 'roles', 'm', 'Catálogo de roles del sistema: estudiante, docente, administrativo, etc.'],
+    usuarios: ['usuario', 'usuarios', 'm', 'Toda persona que usa el sistema. Guarda los datos personales y la contraseña; estudiantes y docentes se apoyan en esta tabla.'],
+    usuario_roles: ['asignación de rol', 'asignaciones de rol', 'f', 'Qué roles tiene cada usuario. Permite que una persona tenga más de uno (por ejemplo, docente y administrativa).'],
+    carreras: ['carrera', 'carreras', 'f', 'Las carreras que dicta el instituto.'],
+    planes_estudio: ['plan de estudio', 'planes de estudio', 'm', 'Versiones del plan de cada carrera, con su resolución y años de vigencia.'],
+    materias: ['materia', 'materias', 'f', 'Materias de una carrera, con año y cuatrimestre de cursada y si se pueden promocionar.'],
+    plan_materias: ['materia del plan', 'materias del plan', 'f', 'Qué materias incluye cada plan de estudio y en qué año y cuatrimestre van.'],
+    periodos_inscripcion: ['período de inscripción', 'períodos de inscripción', 'm', 'Ventanas de tiempo en las que se abre la inscripción, por ejemplo «Ingreso 2027».'],
+    periodo_carrera_planes: ['oferta del período', 'ofertas del período', 'f', 'Qué carrera y qué plan se ofrecen en cada período, con su cupo y su lista de espera.'],
+    estudiantes: ['estudiante', 'estudiantes', 'm', 'El legajo académico: une a un usuario con su carrera y su plan.'],
+    preinscripciones: ['preinscripción', 'preinscripciones', 'f', 'La solicitud de ingreso de una persona a una oferta del período, con su estado y quién la revisó.'],
+    documentos_estudiantes: ['documento', 'documentos', 'm', 'Archivos presentados (DNI, título, analítico, foto) y su verificación.'],
+    historial_cambios_plan: ['cambio de plan', 'cambios de plan', 'm', 'Registro de cada vez que un estudiante pasa de un plan de estudio a otro.'],
+    configuraciones_cursada: ['configuración de cursada', 'configuraciones de cursada', 'f', 'Reglas de aprobación: asistencia mínima, notas para regularizar y promocionar, y vigencia de la regularidad.'],
+    cursadas: ['cursada', 'cursadas', 'f', 'Un estudiante cursando una materia en un ciclo lectivo, y cómo terminó: regular, libre, promocionado…'],
+    evaluaciones: ['evaluación', 'evaluaciones', 'f', 'Parciales, recuperatorios, finales, trabajos prácticos y coloquios de una materia.'],
+    calificaciones: ['calificación', 'calificaciones', 'f', 'La nota (o la ausencia) de una cursada en una evaluación.'],
+    correlatividades: ['correlatividad', 'correlatividades', 'f', 'Qué materia hay que tener cursada o acreditada para cursar o rendir otra, según el plan.'],
+    docentes: ['docente', 'docentes', 'm', 'El legajo docente: une a un usuario con su título y su situación.'],
+    asignaciones_docentes: ['asignación docente', 'asignaciones docentes', 'f', 'Qué docente dicta qué materia, en qué ciclo y con qué rol (titular, adjunto, JTP, auxiliar).'],
+    justificaciones_inasistencia: ['justificación', 'justificaciones', 'f', 'Inasistencias justificadas de un estudiante en un rango de fechas, cargadas por un administrativo.'],
+    clases: ['clase', 'clases', 'f', 'Cada clase de una materia: fecha, docente, tema tratado y si se dictó.'],
+    asistencias: ['asistencia', 'asistencias', 'f', 'Presente, ausente o justificado de cada estudiante en cada clase.'],
+    constancias_estudiantes: ['constancia', 'constancias', 'f', 'Constancias emitidas al estudiante, con un código para verificarlas.'],
+    acta_firmantes: ['firmante', 'firmantes', 'm', 'Personas habilitadas para firmar actas, con su clave pública y certificado.'],
+    acta_requisitos_firma: ['requisito de firma', 'requisitos de firma', 'm', 'Qué firmas lleva cada tipo de acta y en qué orden.'],
+    actas: ['acta', 'actas', 'f', 'Actas académicas con su contenido en JSON y un hash para comprobar que nadie las alteró.'],
+    acta_firmas: ['firma', 'firmas', 'f', 'Cada firma digital aplicada sobre un acta.'],
+    acta_historial: ['evento del acta', 'eventos del acta', 'm', 'Bitácora de todo lo que le pasa a un acta: creación, firmas, anulación, descargas.']
+  };
+
+  var TOURS = [
+    { id: 'ingreso', title: 'Cómo entra un aspirante', sub: 'Del período de inscripción al legajo del estudiante.', steps: [
+      [['periodos_inscripcion'], 'Todo empieza cuando secretaría abre un período en {periodos_inscripcion}, por ejemplo «Ingreso 2027», con fecha de inicio y de cierre.'],
+      [['periodos_inscripcion', 'periodo_carrera_planes', 'carreras', 'planes_estudio'], 'En ese período se ofrece cada carrera con un plan concreto. Esa combinación vive en {periodo_carrera_planes}, que también guarda el cupo y la lista de espera.'],
+      [['usuarios', 'roles', 'usuario_roles'], 'La persona queda registrada en {usuarios}. Qué puede hacer en el sistema lo dicen {roles} y {usuario_roles}.'],
+      [['usuarios', 'preinscripciones', 'periodo_carrera_planes'], 'Cada fila de {preinscripciones} une a ese usuario con la oferta que eligió. Tiene un estado (preinscripto, en revisión, confirmado…) y apunta otra vez a {usuarios} para guardar quién la revisó.'],
+      [['preinscripciones', 'documentos_estudiantes', 'usuarios'], 'Los archivos adjuntos van a {documentos_estudiantes}. Cada uno queda pendiente, aprobado o rechazado, con el usuario que lo verificó.'],
+      [['preinscripciones', 'estudiantes', 'usuarios', 'carreras', 'planes_estudio'], 'Si se confirma, nace el legajo en {estudiantes}: un registro ligado uno a uno con el usuario, con su carrera y su plan. La preinscripción queda apuntando a ese estudiante.']
+    ] },
+    { id: 'carrera', title: 'Cómo se arma una carrera', sub: 'Carreras, planes, materias y correlatividades.', steps: [
+      [['carreras', 'planes_estudio'], 'Cada carrera de {carreras} tiene uno o más planes en {planes_estudio}, identificados por su resolución y sus años de vigencia.'],
+      [['carreras', 'materias'], 'Las {materias} pertenecen a una carrera e indican año, cuatrimestre, si son anuales y si se pueden promocionar.'],
+      [['planes_estudio', 'plan_materias', 'materias'], '{plan_materias} arma el plan: qué materias incluye y en qué año y cuatrimestre van. Una misma materia puede estar en varios planes.'],
+      [['correlatividades', 'planes_estudio', 'materias'], '{correlatividades} define qué necesitás para cursar o rendir una materia. Apunta dos veces a {materias}: a la materia y a su correlativa.'],
+      [['configuraciones_cursada', 'materias'], '{configuraciones_cursada} fija las reglas de aprobación: asistencia mínima, nota para regularizar y para promocionar, y cuántos meses dura la regularidad.']
+    ] },
+    { id: 'nota', title: 'De la cursada a la nota', sub: 'Cómo llega una calificación a un estudiante.', steps: [
+      [['estudiantes', 'cursadas', 'materias', 'planes_estudio'], 'Cuando un estudiante se anota en una materia se crea una fila en {cursadas} para ese ciclo lectivo. Ahí queda el resultado: cursando, regular, libre, promocionado o aprobado.'],
+      [['docentes', 'asignaciones_docentes', 'materias', 'usuarios'], 'Del otro lado, {asignaciones_docentes} dice qué docente de {docentes} dicta cada materia en el ciclo y con qué rol.'],
+      [['evaluaciones', 'materias', 'asignaciones_docentes'], 'Cada fila de {evaluaciones} (parcial, recuperatorio, final…) pertenece a una materia y a una asignación docente. Un recuperatorio apunta a la evaluación que recupera.'],
+      [['cursadas', 'calificaciones', 'evaluaciones'], '{calificaciones} cruza las dos cosas: la nota de una cursada en una evaluación, o si el estudiante estuvo ausente.']
+    ] },
+    { id: 'clase', title: 'Un día de clase', sub: 'Clases, asistencia y justificaciones.', steps: [
+      [['clases', 'materias', 'docentes'], 'Cada fila de {clases} registra la fecha, la materia, el docente y el tema que se dio.'],
+      [['clases', 'asistencias', 'estudiantes'], 'En {asistencias} se marca a cada estudiante: presente, ausente o con inasistencia justificada.'],
+      [['justificaciones_inasistencia', 'estudiantes', 'usuarios', 'asistencias'], 'Si el estudiante presenta un certificado, un administrativo carga una justificación en {justificaciones_inasistencia} por un rango de fechas, y las asistencias de esos días apuntan a ella.']
+    ] },
+    { id: 'acta', title: 'Un acta con firma digital', sub: 'Contenido, firmas y bitácora.', steps: [
+      [['actas', 'estudiantes', 'materias', 'cursadas', 'usuarios'], 'Cada fila de {actas} documenta un resultado: examen final, cursada, analítico o habilitación. Guarda el contenido en JSON y su hash SHA-256 para detectar cualquier cambio.'],
+      [['acta_requisitos_firma', 'acta_firmas'], '{acta_requisitos_firma} define qué firmas lleva cada tipo de acta y en qué orden.'],
+      [['acta_firmantes', 'usuarios', 'acta_firmas', 'actas'], 'Cada firmante de {acta_firmantes} es un usuario con su clave pública. {acta_firmas} guarda la firma de ese firmante sobre el hash del acta.'],
+      [['actas', 'acta_historial', 'usuarios'], 'Todo lo que le pasa al acta queda en {acta_historial}. Si hay que corregirla, se crea un acta nueva que apunta a la original.']
+    ] },
+    { id: 'constancia', title: 'Pedir una constancia', sub: 'Constancias con código de verificación.', steps: [
+      [['constancias_estudiantes', 'estudiantes', 'usuarios'], 'Las {constancias_estudiantes} se emiten para un estudiante, las emite un usuario y llevan un código único para que cualquiera pueda verificarlas.']
+    ] }
+  ];
+
+  // Observaciones sobre el modelo. Cada una se muestra sólo si la condición sigue siendo cierta en el modelo cargado.
+  var REVIEW = [
+    { t: 'usuarios', check: function (M) { return col(M, 'usuarios', 'id_rol') && M.tables.usuario_roles; }, text: 'Tiene <code>id_rol</code> y además existe <code>usuario_roles</code>: el rol de una persona se puede guardar en dos lugares.' },
+    { t: 'usuarios', check: function (M) { var c = col(M, 'usuarios', 'password'); return c && c.nn; }, text: '<code>password</code> es obligatorio, pero en esta etapa el aspirante no tiene cuenta.' },
+    { t: 'documentos_estudiantes', check: function (M) { var c = col(M, 'documentos_estudiantes', 'id_estudiante'); return c && c.nn; }, text: '<code>id_estudiante</code> es obligatorio, pero durante la preinscripción todavía no existe el estudiante.' },
+    { t: 'preinscripciones', check: function (M) { return M.tables.preinscripciones && !Object.keys(M.tables).some(function (n) { return /preinscrip/.test(n) && /historial|evento|auditor/.test(n); }); }, text: 'No hay tabla de historial de la preinscripción: la auditoría de decisiones que pide el módulo M3 no tiene dónde guardarse.' },
+    { t: 'preinscripciones', check: function (M) { var c = col(M, 'preinscripciones', 'estado'); return c && c.enumVals && !c.enumVals.some(function (v) { return /observ/.test(v); }); }, text: 'El estado no incluye «observada», que sí figura en el documento del proyecto.' },
+    { t: 'evaluaciones', check: function (M) { return col(M, 'evaluaciones', 'id_materia') && col(M, 'evaluaciones', 'id_asignacion'); }, text: 'Tiene <code>id_materia</code> y también <code>id_asignacion</code>, que ya apunta a una materia: las dos podrían no coincidir.' },
+    { t: 'clases', check: function (M) { return col(M, 'clases', 'id_docente') && col(M, 'clases', 'id_materia') && !col(M, 'clases', 'id_asignacion'); }, text: 'Apunta a materia y a docente por separado, en lugar de a <code>asignaciones_docentes</code>, y no guarda el período.' },
+    { t: 'plan_materias', check: function (M) { return col(M, 'plan_materias', 'anio_cursada') && col(M, 'materias', 'anio_cursada'); }, text: '<code>anio_cursada</code> y <code>cuatrimestre</code> están acá y también en <code>materias</code>. ¿Cuál manda?' },
+    { t: 'configuraciones_cursada', check: function (M) { var c = col(M, 'configuraciones_cursada', 'id_materia'); return c && !c.nn; }, text: '<code>id_materia</code> es opcional. Si una fila sin materia es la configuración general, conviene dejarlo escrito.' }
+  ];
+
+  /* ================== Parser DBML ================== */
+
+  function col(M, t, c) { var tb = M.tables[t]; return tb && tb.cols.filter(function (x) { return x.name === c; })[0]; }
+  function bal(s) { var n = 0, q = null; for (var i = 0; i < s.length; i++) { var ch = s[i]; if (q) { if (ch === q) q = null; } else if (ch === '"' || ch === "'" || ch === '`') q = ch; else if (ch === '(') n++; else if (ch === ')') n--; } return n; }
+  function clean(s) { return s.replace(/(^|\s)\/\/.*$/, '').trim(); }
+  function splitTop(s) {
+    var out = [], cur = '', q = null, d = 0;
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (q) { if (ch === q) q = null; cur += ch; continue; }
+      if (ch === '"' || ch === "'" || ch === '`') { q = ch; cur += ch; continue; }
+      if (ch === '(') d++; if (ch === ')') d--;
+      if (ch === ',' && d === 0) { out.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    if (cur.trim()) out.push(cur.trim());
+    return out;
+  }
+  function unq(s) { return s.trim().replace(/^["'`]|["'`]$/g, ''); }
+  function nice(s) { s = s.trim().toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function block(lines, i) {
+    var depth = 0, body = [];
+    for (var j = i; j < lines.length; j++) {
+      var l = clean(lines[j]);
+      for (var k = 0; k < l.length; k++) { if (l[k] === '{') depth++; else if (l[k] === '}') depth--; }
+      if (j === i) { if (depth <= 0) return { body: [], end: j }; continue; }
+      if (depth <= 0) return { body: body, end: j };
+      body.push(lines[j]);
+    }
+    return { body: body, end: lines.length - 1 };
+  }
+
+  function parseCol(stmt) {
+    var m = stmt.match(/^"?(\w+)"?\s+(.+?)\s*(?:\[([^\[\]]*)\])?\s*$/);
+    if (!m) return null;
+    var type = m[2].trim(), enumVals = null;
+    if (/^enum\s*\(/i.test(type)) {
+      enumVals = []; type.replace(/"([^"]*)"|'([^']*)'/g, function (_, a, b) { enumVals.push(a != null ? a : b); });
+      type = 'enum';
+    }
+    var c = { name: m[1], type: type, enumVals: enumVals, pk: false, inc: false, nn: false, unique: false, def: null, note: '', inlineRef: null };
+    splitTop(m[3] || '').forEach(function (a) {
+      var al = a.toLowerCase();
+      if (al === 'pk' || al === 'primary key') c.pk = true;
+      else if (al === 'increment') c.inc = true;
+      else if (al === 'not null') c.nn = true;
+      else if (al === 'unique') c.unique = true;
+      else if (al.indexOf('default:') === 0) c.def = unq(a.slice(8));
+      else if (al.indexOf('note:') === 0) c.note = unq(a.slice(5));
+      else if (al.indexOf('ref:') === 0) c.inlineRef = a.slice(4).trim();
+    });
+    if (c.pk) c.nn = true;
+    return c;
+  }
+
+  function parseIndex(stmt) {
+    var m = stmt.match(/^(\(([^)]*)\)|"?\w+"?)\s*(?:\[([^\]]*)\])?$/);
+    if (!m) return { cols: [], raw: stmt };
+    var cols = m[2] != null ? m[2].split(',').map(function (s) { return unq(s); }).filter(Boolean) : [unq(m[1])];
+    var at = (m[3] || '').toLowerCase();
+    return { cols: cols, pk: /\bpk\b|primary key/.test(at), unique: /\bunique\b/.test(at), raw: stmt };
+  }
+
+  function parseTable(name, body, line, M) {
+    var t = { name: name, cols: [], idx: [], note: '', line: line };
+    var L = body.map(clean), j = 0;
+    while (j < L.length) {
+      var l = L[j];
+      if (!l) { j++; continue; }
+      if (/^indexes\s*\{/i.test(l)) {
+        j++; var st = '';
+        while (j < L.length && !/^\}/.test(L[j])) {
+          var x = L[j]; j++;
+          if (!x) continue;
+          st += (st ? ' ' : '') + x;
+          if (bal(st) === 0) { t.idx.push(parseIndex(st)); st = ''; }
+        }
+        j++; continue;
+      }
+      if (/^note\s*:/i.test(l)) { t.note = unq(l.replace(/^note\s*:\s*/i, '')); j++; continue; }
+      var stmt = l;
+      while (bal(stmt) !== 0 && j + 1 < L.length) { j++; stmt += ' ' + L[j]; }
+      var c = parseCol(stmt);
+      if (c) t.cols.push(c); else M.warnings.push({ t: name, line: line + j + 1, text: 'No se pudo leer la columna «' + stmt + '».' });
+      j++;
+    }
+    t.idx.forEach(function (ix) {
+      ix.cols.forEach(function (cn) {
+        var c = t.cols.filter(function (x) { return x.name === cn; })[0];
+        if (!c) return;
+        if (ix.pk) { c.pk = true; c.nn = true; c.cpk = ix.cols.length > 1; }
+        if (ix.unique && ix.cols.length === 1) c.unique = true;
+      });
+    });
+    return t;
+  }
+
+  function addRef(M, expr, line) {
+    var m = expr.trim().match(/^"?(\w+)"?\s*\.\s*"?(\w+)"?\s*(<>|<|>|-)\s*"?(\w+)"?\s*\.\s*"?(\w+)"?\s*(?:\[.*\])?$/);
+    if (!m) {
+      var tm = expr.match(/"?(\w+)"?\s*\./);
+      M.warnings.push({ t: tm ? tm[1] : null, line: line, text: 'Relación que no se pudo interpretar: <code>' + esc(expr.trim()) + '</code>. No se dibuja.' });
+      return;
+    }
+    var t1 = m[1], c1 = m[2], op = m[3], t2 = m[4], c2 = m[5];
+    if (op === '<') { var a = t1, b = c1; t1 = t2; c1 = c2; t2 = a; c2 = b; }
+    M.refs.push({ from: { t: t1, c: c1 }, to: { t: t2, c: c2 }, kind: op === '-' ? '1-1' : op === '<>' ? 'n-n' : 'n-1', line: line });
+  }
+
+  function parseDBML(src) {
+    var lines = src.split(/\r?\n/);
+    var M = { project: {}, modules: [], tables: {}, order: [], refs: [], warnings: [] };
+    var mod = null;
+    function getMod(num, name) {
+      var f = M.modules.filter(function (x) { return x.name === name; })[0];
+      if (!f) { f = { num: num, name: name, tables: [] }; M.modules.push(f); }
+      return f;
+    }
+    for (var i = 0; i < lines.length; i++) {
+      var raw = lines[i].trim(), m;
+      if ((m = raw.match(/^\/\/\s*M[OÓ]DULO\s*(\d+)\s*[:.\-–]\s*(.+)$/i))) { mod = getMod(+m[1], nice(m[2])); continue; }
+      var line = clean(lines[i]);
+      if (!line) continue;
+      if ((m = line.match(/^Project\s+("?)([\w-]+)\1\s*\{/i))) {
+        var pb = block(lines, i); i = pb.end; M.project.name = m[2];
+        pb.body.forEach(function (b) {
+          var k, x = clean(b);
+          if ((k = x.match(/^database_type\s*:\s*["'](.+?)["']/i))) M.project.db = k[1];
+          if ((k = x.match(/^note\s*:\s*["'](.+?)["']/i))) M.project.note = k[1];
+        });
+        continue;
+      }
+      if ((m = line.match(/^Table\s+"?([\w.]+)"?(?:\s+as\s+\w+)?\s*(?:\[[^\]]*\])?\s*\{/i))) {
+        var tb = block(lines, i);
+        var t = parseTable(m[1], tb.body, i + 1, M);
+        if (!mod) mod = getMod(null, 'General');
+        t.module = mod; mod.tables.push(t); M.tables[t.name] = t; M.order.push(t);
+        i = tb.end; continue;
+      }
+      if ((m = line.match(/^Ref\b[^:]*:\s*(.+)$/i))) { addRef(M, m[1], i + 1); continue; }
+      if (/^(Enum|TableGroup)\b/i.test(line)) { i = block(lines, i).end; continue; }
+    }
+    M.order.forEach(function (t) { t.cols.forEach(function (c) { if (c.inlineRef) addRef(M, t.name + '.' + c.name + ' ' + c.inlineRef, t.line); }); });
+
+    // Validar referencias
+    var seen = {};
+    M.refs = M.refs.filter(function (r) {
+      var ok = col(M, r.from.t, r.from.c) && col(M, r.to.t, r.to.c);
+      if (!ok) { M.warnings.push({ t: r.from.t, line: r.line, text: 'La relación <code>' + r.from.t + '.' + r.from.c + ' → ' + r.to.t + '.' + r.to.c + '</code> nombra una tabla o columna que no existe.' }); return false; }
+      var key = r.from.t + '.' + r.from.c + '>' + r.to.t + '.' + r.to.c;
+      if (seen[key]) return false;
+      seen[key] = 1; return true;
+    });
+    M.refs.forEach(function (r, i) { r.id = i; col(M, r.from.t, r.from.c).fk = r; });
+
+    // Colores de módulo
+    var extra = 0;
+    M.modules.forEach(function (md) { md.color = MOD_COLOR[md.num] || EXTRA_COLORS[extra++ % EXTRA_COLORS.length]; });
+    M.colCount = M.order.reduce(function (s, t) { return s + t.cols.length; }, 0);
+    return M;
+  }
+
+  /* ================== Utilidades ================== */
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+  function norm(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  function meta(t) { var m = META[t]; return m ? { sing: m[0], pl: m[1], g: m[2], desc: m[3] } : { sing: 'fila de ' + t, pl: 'filas de ' + t, g: 'f', desc: '' }; }
+  function un(t) { return meta(t).g === 'f' ? 'una' : 'un'; }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+  var toastT;
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2400); }
+
+  /* ================== Estado ================== */
+
+  var M, S = { pos: {}, view: { x: 0, y: 0, s: 1 }, sel: null, hover: null, tour: null, step: 0, q: '', all: false, tab: 'mods' };
+  var cardEl = {}, notesBy = {}, allNotes = [], sig = '';
+
+  function load(src, fromUser, info) {
+    var parsed;
+    try { parsed = parseDBML(src); } catch (e) { toast('No se pudo leer el archivo: ' + e.message); return false; }
+    if (!parsed.order.length) { toast('El archivo no tiene tablas en formato DBML.'); return false; }
+    M = parsed;
+    sig = M.order.map(function (t) { return t.name; }).join(',');
+    S.sel = null; S.tour = null; S.hover = null;
+    buildNotes();
+    renderHeader();
+    buildNodes();
+    var saved = store('siga-mapa:' + sig);
+    S.pos = {};
+    defaultLayout();
+    if (saved) Object.keys(saved).forEach(function (k) { if (S.pos[k]) S.pos[k] = saved[k]; });
+    placeNodes();
+    drawWires();
+    renderList();
+    closeDrawer();
+    $('tour').hidden = true;
+    fitTo(null, false);
+    S.src = info || { kind: 'original' };
+    $('src').textContent = S.src.kind === 'importado' ? 'Importado: ' + S.src.name + ' · ' + S.src.when : 'Versión incluida';
+    $('src').className = 'src hide-sm' + (S.src.kind === 'importado' ? ' imp' : '');
+    $('orig-btn').hidden = S.src.kind !== 'importado';
+    if (fromUser) toast('Modelo importado: ' + M.order.length + ' tablas, ' + M.refs.length + ' relaciones');
+    return true;
+  }
+
+  function buildNotes() {
+    notesBy = {}; allNotes = [];
+    REVIEW.forEach(function (n) { if (M.tables[n.t] && n.check(M)) allNotes.push({ t: n.t, text: n.text }); });
+    M.warnings.forEach(function (w) { allNotes.push({ t: w.t && M.tables[w.t] ? w.t : null, text: w.text + ' <span style="color:var(--faint)">(línea ' + w.line + ')</span>' }); });
+    if (M.project.db && /mysql|maria/i.test(M.project.db)) allNotes.push({ t: null, text: 'El archivo declara <b>' + esc(M.project.db) + '</b> como motor, pero el proyecto eligió PostgreSQL.' });
+    allNotes.forEach(function (n) { if (n.t) (notesBy[n.t] = notesBy[n.t] || []).push(n); });
+  }
+
+  function renderHeader() {
+    $('proj').textContent = (M.project.name || 'modelo') + (M.project.db ? ' · ' + M.project.db : '') + (M.project.note ? ' · ' + M.project.note : '');
+    $('stats').innerHTML = '<span><b>' + M.order.length + '</b> tablas</span><span><b>' + M.colCount + '</b> columnas</span><span><b>' + M.refs.length + '</b> relaciones</span><span><b>' + M.modules.length + '</b> módulos</span>';
+    $('n-notes').textContent = allNotes.length ? allNotes.length : '';
+  }
+
+  /* ================== Tarjetas ================== */
+
+  function isKey(t, c) { return c.pk || c.fk || M.refs.some(function (r) { return r.to.t === t.name && r.to.c === c.name; }); }
+
+  function cardHTML(t) {
+    var shown = t.cols.filter(function (c) { return S.all || isKey(t, c); });
+    var hidden = t.cols.length - shown.length;
+    return '<div class="th"><i></i><b>' + esc(t.name) + '</b>' + (notesBy[t.name] ? '<span class="wdot" title="Tiene observaciones"></span>' : '') + '<small>' + t.cols.length + '</small></div>' +
+      '<ul class="rows">' + shown.map(function (c) {
+        var k = c.pk ? '<span class="k pk">PK</span>' : c.fk ? '<span class="k fk">FK</span>' : c.unique ? '<span class="k uq">UQ</span>' : '<span></span>';
+        return '<li data-c="' + esc(c.name) + '">' + k + '<span class="cn">' + esc(c.name) + '</span><span class="ct">' + esc(c.type) + '</span></li>';
+      }).join('') + (hidden ? '<li class="more">+ ' + hidden + (hidden === 1 ? ' columna más' : ' columnas más') + '</li>' : '') + '</ul>';
+  }
+
+  function buildNodes() {
+    var nodes = $('nodes'); nodes.innerHTML = ''; cardEl = {};
+    M.order.forEach(function (t) {
+      var d = document.createElement('div');
+      d.className = 'tbl'; d.dataset.t = t.name; d.tabIndex = 0;
+      d.setAttribute('role', 'button'); d.setAttribute('aria-label', 'Tabla ' + t.name);
+      d.style.setProperty('--m', t.module.color);
+      d.innerHTML = cardHTML(t);
+      nodes.appendChild(d); cardEl[t.name] = d;
+    });
+  }
+
+  function refreshCards() { M.order.forEach(function (t) { cardEl[t.name].innerHTML = cardHTML(t); }); }
+
+  /* ================== Diagramación ================== */
+
+  var W = 252, COL_GAP = 150, TBL_GAP = 20, MOD_GAP = 70, HEAD = 46;
+
+  function defaultLayout() {
+    var cols = [], nextCol = 5;
+    M.modules.forEach(function (md) {
+      var c = MOD_COLUMN[md.num];
+      if (c == null) c = nextCol++;
+      (cols[c] = cols[c] || []).push(md);
+    });
+    cols = cols.filter(Boolean);
+    var heights = cols.map(function (mods) {
+      return mods.reduce(function (h, md, i) {
+        return h + (i ? MOD_GAP : 0) + HEAD + md.tables.reduce(function (s, t, j) { return s + (j ? TBL_GAP : 0) + cardEl[t.name].offsetHeight; }, 0);
+      }, 0);
+    });
+    var maxH = Math.max.apply(null, heights);
+    cols.forEach(function (mods, ci) {
+      var x = ci * (W + COL_GAP), y = (maxH - heights[ci]) / 2;
+      mods.forEach(function (md, mi) {
+        if (mi) y += MOD_GAP;
+        y += HEAD;
+        md.tables.forEach(function (t, j) {
+          if (j) y += TBL_GAP;
+          S.pos[t.name] = { x: x, y: Math.round(y) };
+          y += cardEl[t.name].offsetHeight;
+        });
+      });
+    });
+  }
+
+  function placeNodes() { M.order.forEach(function (t) { var p = S.pos[t.name]; cardEl[t.name].style.transform = 'translate(' + p.x + 'px,' + p.y + 'px)'; }); }
+
+  function anchor(tn, cn) {
+    var el = cardEl[tn], p = S.pos[tn];
+    var row = el.querySelector('li[data-c="' + cn + '"]');
+    return { x: p.x, y: p.y + (row ? row.offsetTop + row.offsetHeight / 2 : 17), w: el.offsetWidth };
+  }
+
+  function edgeGeom(r) {
+    var a = anchor(r.from.t, r.from.c), b = anchor(r.to.t, r.to.c);
+    var ac = a.x + a.w / 2, bc = b.x + b.w / 2, sx, tx, sd, td, d;
+    if (r.from.t === r.to.t || Math.abs(ac - bc) < 60) {
+      sx = a.x + a.w; tx = b.x + b.w; sd = 1; td = 1;
+      var k = 36 + Math.min(70, Math.abs(a.y - b.y) * 0.12);
+      d = 'M' + sx + ',' + a.y + ' C' + (sx + k) + ',' + a.y + ' ' + (tx + k) + ',' + b.y + ' ' + tx + ',' + b.y;
+    } else {
+      if (bc > ac) { sx = a.x + a.w; tx = b.x; sd = 1; td = -1; } else { sx = a.x; tx = b.x + b.w; sd = -1; td = 1; }
+      var k2 = Math.max(50, Math.abs(tx - sx) * 0.45);
+      d = 'M' + sx + ',' + a.y + ' C' + (sx + sd * k2) + ',' + a.y + ' ' + (tx + td * k2) + ',' + b.y + ' ' + tx + ',' + b.y;
+    }
+    var sy = a.y, ty = b.y, ends = '';
+    // extremo "muchos" (o "uno" si es 1 a 1) en la tabla que tiene la FK
+    if (r.kind === '1-1') ends += 'M' + (sx + sd * 9) + ',' + (sy - 6) + 'v12';
+    else ends += 'M' + (sx + sd * 13) + ',' + sy + 'L' + sx + ',' + (sy - 6) + 'M' + (sx + sd * 13) + ',' + sy + 'L' + sx + ',' + (sy + 6) + 'M' + (sx + sd * 13) + ',' + sy + 'H' + sx;
+    // extremo "uno" en la tabla referenciada
+    var req = col(M, r.from.t, r.from.c).nn;
+    ends += 'M' + (tx + td * 7) + ',' + (ty - 6) + 'v12';
+    if (req) ends += 'M' + (tx + td * 12) + ',' + (ty - 6) + 'v12';
+    return { d: d, ends: ends, opt: req ? null : { x: tx + td * 16, y: ty } };
+  }
+
+  function drawWires() {
+    var svg = $('wires'), html = '';
+    // regiones de módulo
+    M.modules.forEach(function (md) {
+      if (!md.tables.length) return;
+      var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      md.tables.forEach(function (t) { var p = S.pos[t.name], el = cardEl[t.name]; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + el.offsetWidth); y1 = Math.max(y1, p.y + el.offsetHeight); });
+      var px = 18;
+      html += '<g class="region" data-m="' + esc(md.name) + '" style="--m:' + md.color + '"><rect x="' + (x0 - px) + '" y="' + (y0 - 40) + '" width="' + (x1 - x0 + px * 2) + '" height="' + (y1 - y0 + 40 + px) + '" rx="16"/>' +
+        '<text x="' + (x0 - px + 14) + '" y="' + (y0 - 16) + '">' + esc(md.name) + '</text></g>';
+    });
+    M.refs.forEach(function (r) {
+      var g = edgeGeom(r), color = M.tables[r.from.t].module.color;
+      html += '<g class="edge" data-r="' + r.id + '" style="--m:' + color + '"><path class="wire" d="' + g.d + '"/><path class="ends" d="' + g.ends + '"/>' +
+        (g.opt ? '<circle class="opt" cx="' + g.opt.x + '" cy="' + g.opt.y + '" r="4"/>' : '') + '</g>';
+    });
+    svg.innerHTML = html;
+    applyFocus();
+  }
+
+  /* ================== Resaltado ================== */
+
+  function focusSet() {
+    // Devuelve { tables: {name:1}, edges: {id:1}, rows: [[t,c]] } o null si no hay foco
+    var T = {}, E = {}, rows = [];
+    if (S.tour) {
+      var step = TOURS.filter(function (x) { return x.id === S.tour; })[0].steps[S.step][0].filter(function (n) { return M.tables[n]; });
+      step.forEach(function (n) { T[n] = 1; });
+      M.refs.forEach(function (r) { if (T[r.from.t] && T[r.to.t]) { E[r.id] = 1; rows.push([r.from.t, r.from.c], [r.to.t, r.to.c]); } });
+      return { tables: T, edges: E, rows: rows };
+    }
+    var f = S.hover || S.sel;
+    if (f) {
+      T[f] = 1;
+      M.refs.forEach(function (r) { if (r.from.t === f || r.to.t === f) { E[r.id] = 1; T[r.from.t] = 1; T[r.to.t] = 1; rows.push([r.from.t, r.from.c], [r.to.t, r.to.c]); } });
+      return { tables: T, edges: E, rows: rows };
+    }
+    if (S.q) {
+      var any = false;
+      M.order.forEach(function (t) { if (matchTable(t).length) { T[t.name] = 1; any = true; } });
+      return { tables: T, edges: {}, rows: [], search: true, any: any };
+    }
+    return null;
+  }
+
+  function applyFocus() {
+    var f = focusSet();
+    M.order.forEach(function (t) {
+      var el = cardEl[t.name];
+      el.classList.toggle('sel', S.sel === t.name && !S.tour);
+      el.classList.toggle('match', !!(f && f.search && f.tables[t.name]));
+      el.classList.toggle('dim', !!(f && !f.tables[t.name]));
+      el.querySelectorAll('li.hot').forEach(function (li) { li.classList.remove('hot'); });
+    });
+    if (f) f.rows.forEach(function (rc) { var li = cardEl[rc[0]].querySelector('li[data-c="' + rc[1] + '"]'); if (li) li.classList.add('hot'); });
+    $('wires').querySelectorAll('.edge').forEach(function (g) {
+      var id = g.dataset.r;
+      g.classList.toggle('on', !!(f && f.edges[id]));
+      g.classList.toggle('dim', !!(f && !f.edges[id]));
+    });
+    $('wires').querySelectorAll('.region').forEach(function (g) { g.classList.toggle('dim', !!f); });
+    $('hint').style.opacity = f || S.touched ? 0 : 1;
+  }
+
+  /* ================== Vista: pan y zoom ================== */
+
+  var world = $('world'), stage = $('stage');
+  function applyView(anim) {
+    world.style.transition = anim ? 'transform .5s cubic-bezier(.2,.75,.2,1)' : 'none';
+    world.style.transform = 'translate(' + S.view.x + 'px,' + S.view.y + 'px) scale(' + S.view.s + ')';
+    $('z-val').textContent = Math.round(S.view.s * 100) + '%';
+  }
+  function zoomAt(px, py, f, anim) {
+    var s2 = Math.min(2.5, Math.max(0.15, S.view.s * f));
+    S.view.x = px - (px - S.view.x) * (s2 / S.view.s);
+    S.view.y = py - (py - S.view.y) * (s2 / S.view.s);
+    S.view.s = s2; applyView(anim);
+  }
+  function freeArea() {
+    var r = stage.getBoundingClientRect(), w = r.width, h = r.height, top = 0;
+    var mobile = window.matchMedia('(max-width: 820px)').matches;
+    if (!$('drawer').classList.contains('closed')) { if (mobile) h *= 0.28; else w -= $('drawer').offsetWidth; }
+    if (!$('tour').hidden) h -= $('tour').offsetHeight + 24;
+    return { w: Math.max(120, w), h: Math.max(120, h), top: top };
+  }
+  function fitTo(names, anim) {
+    names = (names || M.order.map(function (t) { return t.name; })).filter(function (n) { return S.pos[n]; });
+    if (!names.length) return;
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    names.forEach(function (n) { var p = S.pos[n], el = cardEl[n]; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + el.offsetWidth); y1 = Math.max(y1, p.y + el.offsetHeight); });
+    var pad = names.length > 1 ? 70 : 120;
+    x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+    var a = freeArea();
+    var s = Math.min(a.w / (x1 - x0), a.h / (y1 - y0), names.length > 1 ? 1.1 : 1.2);
+    s = Math.max(0.15, s);
+    S.view.s = s;
+    S.view.x = (a.w - (x1 - x0) * s) / 2 - x0 * s;
+    S.view.y = a.top + (a.h - (y1 - y0) * s) / 2 - y0 * s;
+    applyView(anim);
+  }
+
+  // Punteros: arrastrar lienzo, arrastrar tabla, pellizcar
+  var ptrs = {}, drag = null, pinch = null;
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.drawer, .tour, .zoom, .legend')) return;
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    stage.setPointerCapture(e.pointerId);
+    var ids = Object.keys(ptrs);
+    if (ids.length === 2) {
+      var p1 = ptrs[ids[0]], p2 = ptrs[ids[1]];
+      pinch = { d: Math.hypot(p1.x - p2.x, p1.y - p2.y), s: S.view.s }; drag = null; return;
+    }
+    var card = e.target.closest('.tbl');
+    drag = { sx: e.clientX, sy: e.clientY, vx: S.view.x, vy: S.view.y, card: card ? card.dataset.t : null, moved: false };
+    if (card) { var p = S.pos[drag.card]; drag.px = p.x; drag.py = p.y; }
+  });
+  var raf = null;
+  stage.addEventListener('pointermove', function (e) {
+    if (ptrs[e.pointerId]) ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (pinch) {
+      var ids = Object.keys(ptrs); if (ids.length < 2) return;
+      var p1 = ptrs[ids[0]], p2 = ptrs[ids[1]], r = stage.getBoundingClientRect();
+      var d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+      zoomAt((p1.x + p2.x) / 2 - r.left, (p1.y + p2.y) / 2 - r.top, (pinch.s * d / pinch.d) / S.view.s);
+      return;
+    }
+    if (!drag) {
+      var c = e.target.closest && e.target.closest('.tbl');
+      var h = c ? c.dataset.t : null;
+      if (h !== S.hover && !S.tour && e.pointerType === 'mouse') { S.hover = h; applyFocus(); }
+      return;
+    }
+    var dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (!drag.moved && Math.hypot(dx, dy) < 5) return;
+    if (!drag.moved) { drag.moved = true; S.touched = true; if (drag.card) cardEl[drag.card].classList.add('dragging'); else stage.classList.add('panning'); }
+    if (drag.card) {
+      S.pos[drag.card] = { x: Math.round(drag.px + dx / S.view.s), y: Math.round(drag.py + dy / S.view.s) };
+      cardEl[drag.card].style.transform = 'translate(' + S.pos[drag.card].x + 'px,' + S.pos[drag.card].y + 'px)';
+      if (!raf) raf = requestAnimationFrame(function () { raf = null; drawWires(); });
+    } else {
+      S.view.x = drag.vx + dx; S.view.y = drag.vy + dy; applyView(false);
+    }
+  });
+  function endPtr(e) {
+    delete ptrs[e.pointerId];
+    if (pinch) { if (Object.keys(ptrs).length < 2) pinch = null; drag = null; return; }
+    if (!drag) return;
+    var d = drag; drag = null;
+    stage.classList.remove('panning');
+    if (d.card) {
+      cardEl[d.card].classList.remove('dragging');
+      if (d.moved) { store('siga-mapa:' + sig, S.pos); return; }
+      select(d.card, false); return;
+    }
+    if (!d.moved && e.type === 'pointerup') { if (S.tour) return; select(null); }
+  }
+  stage.addEventListener('pointerup', endPtr);
+  stage.addEventListener('pointercancel', endPtr);
+  stage.addEventListener('pointerleave', function () { if (S.hover && !drag) { S.hover = null; applyFocus(); } });
+  stage.addEventListener('wheel', function (e) {
+    if (e.target.closest('.drawer, .tour')) return;
+    e.preventDefault(); S.touched = true;
+    var r = stage.getBoundingClientRect();
+    if (e.ctrlKey || e.metaKey) zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.01));
+    else { S.view.x -= e.deltaX; S.view.y -= e.deltaY; applyView(false); }
+    applyFocus();
+  }, { passive: false });
+  stage.addEventListener('keydown', function (e) { var c = e.target.closest('.tbl'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(c.dataset.t, false); } });
+
+  function center() { var a = freeArea(); return [a.w / 2, a.top + a.h / 2]; }
+  $('z-in').onclick = function () { var c = center(); zoomAt(c[0], c[1], 1.25, true); };
+  $('z-out').onclick = function () { var c = center(); zoomAt(c[0], c[1], 0.8, true); };
+  $('z-fit').onclick = function () { fitTo(null, true); };
+  $('z-reset').onclick = function () { S.pos = {}; defaultLayout(); placeNodes(); drawWires(); store('siga-mapa:' + sig, null); fitTo(null, true); toast('Tablas reacomodadas'); };
+
+  /* ================== Selección y ficha ================== */
+
+  function select(name, pan) {
+    S.sel = name; S.hover = null;
+    if (S.tour && name) endTour(true);
+    if (name) S.touched = true;
+    applyFocus(); renderList();
+    if (!name) { closeDrawer(); return; }
+    renderDrawer(name);
+    var set = [name];
+    M.refs.forEach(function (r) { if (r.from.t === name) set.push(r.to.t); if (r.to.t === name) set.push(r.from.t); });
+    if (pan !== false) fitTo(set, true);
+    else ensureVisible(set);
+  }
+  function ensureVisible(set) {
+    // si la tabla quedó tapada por la ficha, reencuadrar
+    var a = freeArea(), p = S.pos[set[0]], el = cardEl[set[0]];
+    var x = p.x * S.view.s + S.view.x, y = p.y * S.view.s + S.view.y;
+    if (x < 0 || y < 0 || x + el.offsetWidth * S.view.s > a.w || y + 40 > a.h) fitTo(set, true);
+  }
+  function closeDrawer() { $('drawer').classList.add('closed'); }
+
+  function role(r) {
+    var pk = r.to.c, c = r.from.c;
+    if (c === pk) return '';
+    var x = c.indexOf(pk + '_') === 0 ? c.slice(pk.length + 1) : c.replace(/^id_/, '');
+    return x.replace(/_/g, ' ');
+  }
+  function chip(t) { var tb = M.tables[t]; return '<button class="chip" data-go="' + esc(t) + '" style="--m:' + (tb ? tb.module.color : 'var(--faint)') + '">' + esc(t) + '</button>'; }
+
+  function outSentence(r) {
+    var f = r.from.t, p = r.to.t, req = col(M, f, r.from.c).nn, ro = role(r);
+    if (r.kind === '1-1') return 'Cada ' + meta(f).sing + ' corresponde a exactamente ' + un(p) + ' ' + meta(p).sing + ', y cada ' + meta(p).sing + ' tiene como máximo ' + un(f) + ' ' + meta(f).sing + '.';
+    return 'Cada ' + meta(f).sing + ' ' + (req ? 'tiene' : 'puede tener') + ' ' + un(p) + ' ' + meta(p).sing + (ro ? ' como <b>' + esc(ro) + '</b>' : '') + (req ? '.' : ' (es opcional).');
+  }
+  function inSentence(r) {
+    var c = r.from.t, p = r.to.t, ro = role(r);
+    if (r.kind === '1-1') return cap(un(p)) + ' ' + meta(p).sing + ' puede tener como máximo ' + un(c) + ' ' + meta(c).sing + '.';
+    return cap(un(p)) + ' ' + meta(p).sing + ' puede tener ' + (meta(c).g === 'f' ? 'muchas' : 'muchos') + ' ' + meta(c).pl + (ro ? ' (como <b>' + esc(ro) + '</b>)' : '') + '.';
+  }
+
+  function renderDrawer(name) {
+    var t = M.tables[name], m = meta(name), dr = $('drawer');
+    dr.style.setProperty('--m', t.module.color);
+    var out = M.refs.filter(function (r) { return r.from.t === name; });
+    var inn = M.refs.filter(function (r) { return r.to.t === name && r.from.t !== name; });
+    var html = '<div class="d-head"><div class="row"><span class="mod-name"><i></i>' + esc(t.module.name) + '</span><span class="icons">' +
+      '<button class="icon-btn" id="d-fit" title="Encuadrar sus conexiones" aria-label="Encuadrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>' +
+      '<button class="icon-btn" id="d-close" title="Cerrar (Esc)" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span></div>' +
+      '<h2>' + esc(name) + '</h2><p>' + esc(t.note || m.desc || '') + '</p></div><div class="d-body">';
+
+    if (notesBy[name]) html += '<div class="d-sec"><h3>Para revisar</h3>' + notesBy[name].map(function (n) { return '<div class="note">' + n.text + '</div>'; }).join('') + '</div>';
+
+    html += '<div class="d-sec"><h3>Depende de · ' + out.length + '</h3>' + (out.length ? out.map(function (r) {
+      return '<div class="rel"><span class="arrow">→</span><div>' + chip(r.to.t) + ' ' + outSentence(r) + '<small>' + esc(r.from.c) + ' → ' + esc(r.to.t + '.' + r.to.c) + '</small></div></div>';
+    }).join('') : '<p class="muted" style="color:var(--muted);margin:0;font-size:13px">No apunta a ninguna otra tabla: es un punto de partida.</p>') + '</div>';
+
+    html += '<div class="d-sec"><h3>La usan · ' + inn.length + '</h3>' + (inn.length ? inn.map(function (r) {
+      return '<div class="rel"><span class="arrow">←</span><div>' + chip(r.from.t) + ' ' + inSentence(r) + '<small>' + esc(r.from.t + '.' + r.from.c) + ' → ' + esc(r.to.c) + '</small></div></div>';
+    }).join('') : '<p style="color:var(--muted);margin:0;font-size:13px">Ninguna tabla apunta a esta.</p>') + '</div>';
+
+    html += '<div class="d-sec"><h3>Columnas · ' + t.cols.length + '</h3><table class="cols"><tbody>' + t.cols.map(function (c) {
+      var b = [];
+      if (c.pk) b.push('<span class="badge pk">' + (c.cpk ? 'PK compuesta' : 'PK') + '</span>');
+      if (c.fk) b.push('<span class="badge fk" data-go="' + esc(c.fk.to.t) + '">→ ' + esc(c.fk.to.t) + '</span>');
+      if (c.unique) b.push('<span class="badge">única</span>');
+      if (c.inc) b.push('<span class="badge">autoincremental</span>');
+      b.push('<span class="badge">' + (c.nn ? 'obligatoria' : 'opcional') + '</span>');
+      var right = '<span class="ty">' + esc(c.type) + '</span>';
+      if (c.enumVals) right += '<div class="enum">' + c.enumVals.map(function (v) { return '<span' + (v === c.def ? ' class="def" title="Valor por defecto"' : '') + '>' + esc(v) + '</span>'; }).join('') + '</div>';
+      if (c.def != null && !c.enumVals) right += '<span class="dflt">por defecto: <code>' + esc(c.def) + '</code></span>';
+      if (c.note) right += '<span class="dflt">' + esc(c.note) + '</span>';
+      return '<tr><td><div class="nm">' + esc(c.name) + '</div><div class="badges">' + b.join('') + '</div></td><td>' + right + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+
+    var ix = t.idx.filter(function (i) { return i.cols.length > 1 || i.unique || i.pk; });
+    if (ix.length) html += '<div class="d-sec"><h3>Reglas de unicidad</h3>' + ix.map(function (i) {
+      return '<div class="idx">(' + i.cols.map(esc).join(', ') + ') · ' + (i.pk ? 'clave primaria' : i.unique ? 'no se puede repetir la combinación' : 'índice') + '</div>';
+    }).join('') + '</div>';
+
+    html += '</div>';
+    dr.innerHTML = html;
+    dr.classList.remove('closed');
+    $('d-close').onclick = function () { select(null); };
+    $('d-fit').onclick = function () { var set = [name]; out.forEach(function (r) { set.push(r.to.t); }); inn.forEach(function (r) { set.push(r.from.t); }); fitTo(set, true); };
+  }
+
+  document.addEventListener('click', function (e) {
+    var g = e.target.closest('[data-go]');
+    if (g && M.tables[g.dataset.go]) { e.preventDefault(); select(g.dataset.go); closeSideMobile(); }
+  });
+
+  /* ================== Índice lateral ================== */
+
+  function matchTable(t) {
+    if (!S.q) return [];
+    var q = norm(S.q), hits = [];
+    if (norm(t.name).indexOf(q) >= 0 || norm(meta(t.name).sing).indexOf(q) >= 0) hits.push({ kind: 'tabla' });
+    t.cols.forEach(function (c) {
+      if (norm(c.name).indexOf(q) >= 0) hits.push({ kind: 'col', c: c.name });
+      (c.enumVals || []).forEach(function (v) { if (norm(v).indexOf(q) >= 0) hits.push({ kind: 'val', c: c.name, v: v }); });
+    });
+    return hits;
+  }
+  function hl(s) { var i = norm(s).indexOf(norm(S.q)); return i < 0 ? esc(s) : esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + S.q.length)) + '</mark>' + esc(s.slice(i + S.q.length)); }
+
+  function renderList() {
+    var L = $('list'), html = '';
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === S.tab); });
+    if (S.tab === 'mods') {
+      if (S.q) {
+        var res = M.order.map(function (t) { return [t, matchTable(t)]; }).filter(function (x) { return x[1].length; });
+        if (!res.length) html = '<div class="empty">Nada coincide con «' + esc(S.q) + '». Probá con el nombre de una columna o un valor como <code>regular</code>.</div>';
+        res.forEach(function (x) {
+          var t = x[0];
+          html += '<button class="item" data-go="' + esc(t.name) + '" style="--m:' + t.module.color + '"' + (S.sel === t.name ? ' aria-current="true"' : '') + '><span>' + hl(t.name) + '</span></button>';
+          x[1].filter(function (h) { return h.kind !== 'tabla'; }).slice(0, 4).forEach(function (h) {
+            html += '<span class="hit">' + (h.kind === 'col' ? hl(h.c) : esc(h.c) + ' = ' + hl(h.v)) + '</span>';
+          });
+        });
+      } else {
+        M.modules.forEach(function (md) {
+          html += '<div class="mod" style="--m:' + md.color + '"><button class="mod-h" data-mod="' + esc(md.name) + '"><i></i><b>' + esc(md.name) + '</b><small>' + md.tables.length + '</small></button>' +
+            md.tables.map(function (t) {
+              return '<button class="item" data-go="' + esc(t.name) + '"' + (S.sel === t.name ? ' aria-current="true"' : '') + '><span>' + esc(t.name) + '</span>' + (notesBy[t.name] ? '<i class="wdot" title="Tiene observaciones"></i>' : '') + '<small>' + t.cols.length + '</small></button>';
+            }).join('') + '</div>';
+        });
+      }
+    } else if (S.tab === 'tours') {
+      html = TOURS.filter(function (tr) { return tr.steps.some(function (s) { return s[0].some(function (n) { return M.tables[n]; }); }); }).map(function (tr) {
+        var names = []; tr.steps.forEach(function (s) { s[0].forEach(function (n) { if (M.tables[n] && names.indexOf(n) < 0) names.push(n); }); });
+        return '<button class="tour-item" data-tour="' + tr.id + '"><b>' + esc(tr.title) + '</b><span>' + esc(tr.sub) + ' ' + tr.steps.length + (tr.steps.length === 1 ? ' paso.' : ' pasos.') + '</span><span class="path">' +
+          names.map(function (n) { return '<i style="--m:' + M.tables[n].module.color + '" title="' + esc(n) + '"></i>'; }).join('') + '</span></button>';
+      }).join('');
+    } else {
+      html = allNotes.length ? '<p style="margin:4px 4px 12px;color:var(--muted);font-size:12.5px">Cosas que aparecieron al leer el modelo. Cada observación se recalcula si cargás una versión nueva.</p>' + allNotes.map(function (n) {
+        return '<div class="note"><div class="who">' + (n.t ? '<button data-go="' + esc(n.t) + '">' + esc(n.t) + '</button>' : '<span style="font-size:12px;font-weight:600;color:var(--warn)">General</span>') + '</div><div>' + n.text + '</div></div>';
+      }).join('') : '<div class="empty">No hay observaciones para este modelo.</div>';
+    }
+    L.innerHTML = html;
+  }
+
+  document.querySelector('.tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (b) { S.tab = b.dataset.tab; renderList(); } });
+  $('list').addEventListener('click', function (e) {
+    var m = e.target.closest('[data-mod]');
+    if (m) {
+      var md = M.modules.filter(function (x) { return x.name === m.dataset.mod; })[0];
+      S.sel = null; closeDrawer(); applyFocus(); renderList();
+      fitTo(md.tables.map(function (t) { return t.name; }), true); closeSideMobile(); return;
+    }
+    var tr = e.target.closest('[data-tour]');
+    if (tr) { startTour(tr.dataset.tour); closeSideMobile(); }
+  });
+  $('q').addEventListener('input', function () {
+    S.q = this.value.trim(); S.tab = 'mods'; S.sel = null; closeDrawer(); renderList(); applyFocus();
+    if (S.q) { var f = focusSet(); if (f && f.any) fitTo(Object.keys(f.tables), true); }
+  });
+
+  /* ================== Recorridos ================== */
+
+  function startTour(id) { S.tour = id; S.step = 0; S.sel = null; S.hover = null; S.touched = true; closeDrawer(); renderTour(); }
+  function endTour(silent) { S.tour = null; $('tour').hidden = true; $('legend').hidden = false; if (!silent) { applyFocus(); fitTo(null, true); } }
+  function renderTour() {
+    $('legend').hidden = true;
+    var tr = TOURS.filter(function (x) { return x.id === S.tour; })[0], st = tr.steps[S.step], n = tr.steps.length;
+    var text = esc(st[1]).replace(/\{(\w+)\}/g, function (_, t) { return M.tables[t] ? chip(t) : '<code>' + t + '</code>'; });
+    var el = $('tour');
+    el.innerHTML = '<div class="top"><span><b>' + esc(tr.title) + '</b> · paso ' + (S.step + 1) + ' de ' + n + '</span><button class="x" id="t-x" aria-label="Terminar recorrido"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>' +
+      '<p>' + text + '</p><div class="nav"><div class="dots">' + tr.steps.map(function (_, i) { return '<i class="' + (i <= S.step ? 'on' : '') + '"></i>'; }).join('') + '</div>' +
+      '<button class="btn" id="t-prev"' + (S.step === 0 ? ' disabled style="opacity:.4"' : '') + '>Anterior</button>' +
+      '<button class="btn" id="t-next" aria-pressed="true">' + (S.step === n - 1 ? 'Terminar' : 'Siguiente') + '</button></div>';
+    el.hidden = false;
+    $('t-x').onclick = function () { endTour(); };
+    $('t-prev').onclick = function () { if (S.step > 0) { S.step--; renderTour(); } };
+    $('t-next').onclick = function () { if (S.step < n - 1) { S.step++; renderTour(); } else endTour(); };
+    applyFocus();
+    fitTo(st[0].filter(function (t) { return M.tables[t]; }), true);
+  }
+
+  /* ================== Otros controles ================== */
+
+  $('cols-btn').onclick = function () {
+    S.all = !S.all; this.setAttribute('aria-pressed', S.all);
+    refreshCards(); S.pos = {}; var saved = store('siga-mapa:' + sig); defaultLayout();
+    if (saved && !S.all) Object.keys(saved).forEach(function (k) { if (S.pos[k]) S.pos[k] = saved[k]; });
+    placeNodes(); drawWires(); fitTo(null, true);
+  };
+  $('load-btn').onclick = function () { $('file').click(); };
+  function readFile(f) {
+    var r = new FileReader();
+    r.onload = function () {
+      var d = new Date(), info = { kind: 'importado', name: f.name, when: d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) };
+      // se recuerda en este navegador para la próxima vez que se abra la página
+      if (load(String(r.result), true, info)) store('siga-mapa-importado', { text: String(r.result), info: info });
+    };
+    r.readAsText(f);
+  }
+  $('orig-btn').onclick = function () { store('siga-mapa-importado', null); load($('dbml').textContent, false); toast('Volviste al modelo incluido en la página'); };
+  $('file').onchange = function () { if (this.files[0]) readFile(this.files[0]); this.value = ''; };
+  stage.addEventListener('dragover', function (e) { e.preventDefault(); $('drop').hidden = false; });
+  stage.addEventListener('dragleave', function (e) { if (e.target === $('drop')) $('drop').hidden = true; });
+  stage.addEventListener('drop', function (e) { e.preventDefault(); $('drop').hidden = true; var f = e.dataTransfer.files[0]; if (f) readFile(f); });
+
+  function closeSideMobile() { $('app').classList.remove('side-open'); }
+  $('side-btn').onclick = function (e) { e.stopPropagation(); $('app').classList.toggle('side-open'); };
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target.matches('input')) { if (e.key === 'Escape') { e.target.value = ''; e.target.dispatchEvent(new Event('input')); e.target.blur(); } return; }
+    if (e.key === 'Escape') { if (S.tour) endTour(); else if (S.sel) select(null); }
+    else if (e.key === '/') { e.preventDefault(); $('q').focus(); }
+    else if (e.key === 'f' || e.key === 'F') fitTo(null, true);
+    else if (S.tour && e.key === 'ArrowRight') $('t-next').click();
+    else if (S.tour && e.key === 'ArrowLeft') $('t-prev').click();
+  });
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { if (!S.sel && !S.tour) fitTo(null, false); }, 150); });
+
+  function start() { var imp = store('siga-mapa-importado'); if (!(imp && imp.text && load(imp.text, false, imp.info))) load($('dbml').textContent, false); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(start, start); else start();
+})();
+</script>
+</body>
+</html>
