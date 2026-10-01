@@ -104,7 +104,18 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .note .who { display: flex; justify-content: space-between; gap: 8px; }
 .note .who button { border: 0; background: none; padding: 0; cursor: pointer; font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--warn); }
 .note code { background: color-mix(in srgb, var(--warn) 14%, transparent); padding: 0 3px; border-radius: 3px; }
-.side-foot { padding: 10px 12px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
+.side-foot { position: relative; padding: 8px 10px; border-top: 1px solid var(--line); }
+.help-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 4px 6px; border-radius: 6px; cursor: pointer; color: var(--muted); font-size: 12.5px; }
+.help-btn:hover, .help-btn[aria-expanded="true"] { background: var(--card); color: var(--ink); }
+.help-btn .q { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
+.help-pop { position: absolute; left: 10px; bottom: calc(100% - 2px); width: 350px; max-width: calc(100vw - 24px); padding: 12px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 16px 40px -14px rgba(0,0,0,.35); font-size: 12.5px; color: var(--ink); z-index: 30; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .15s, transform .15s, visibility .15s; }
+.side-foot:hover .help-pop, .side-foot:focus-within .help-pop, .help-pop.open { opacity: 1; visibility: visible; transform: none; }
+.help-pop dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.help-pop dl + dl { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.help-pop dt { font-weight: 600; white-space: nowrap; }
+.help-pop dd { margin: 0; color: var(--muted); }
+.help-pop kbd { font-family: var(--mono); font-size: 11px; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); }
+.help-pop p { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); }
 
 /* ---------- Lienzo ---------- */
 .stage { position: relative; overflow: hidden; min-height: 0; touch-action: none; cursor: grab;
@@ -288,7 +299,27 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
         <button role="tab" data-tab="notes" aria-selected="false">Revisión<span class="n" id="n-notes"></span></button>
       </div>
       <div class="list" id="list"></div>
-      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Doble clic en una tabla o en un módulo para acercarte; doble clic en el fondo para ver todo. La rueda del mouse (o el pellizco) hace zoom hacia donde apuntás; teclas 1–7 para ir a cada módulo; P para ver solo el lienzo.</div>
+      <div class="side-foot">
+        <button class="help-btn" id="help-btn" aria-expanded="false" aria-controls="help-pop"><span class="q">?</span>Cómo usar el mapa</button>
+        <div class="help-pop" id="help-pop" role="tooltip">
+          <dl>
+            <dt>Arrastrar el fondo</dt><dd>mover el lienzo</dd>
+            <dt>Rueda o pellizco</dt><dd>zoom hacia el puntero</dd>
+            <dt>Arrastrar una tabla</dt><dd>reacomodarla</dd>
+            <dt>Doble clic en tabla</dt><dd>acercarse a ella</dd>
+            <dt>Doble clic en módulo</dt><dd>encuadrar el módulo</dd>
+            <dt>Doble clic en el fondo</dt><dd>ver todo</dd>
+          </dl>
+          <dl class="keys">
+            <dt><kbd>1</kbd>–<kbd>7</kbd></dt><dd>ir a cada módulo</dd>
+            <dt><kbd>F</kbd></dt><dd>ver todo</dd>
+            <dt><kbd>P</kbd></dt><dd>solo el lienzo</dd>
+            <dt><kbd>/</kbd></dt><dd>buscar</dd>
+            <dt><kbd>Esc</kbd></dt><dd>cerrar o volver</dd>
+          </dl>
+          <p>Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo.</p>
+        </div>
+      </div>
     </aside>
 
     <main class="stage" id="stage" aria-label="Diagrama del modelo de datos">
@@ -2148,6 +2179,8 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
   stage.addEventListener('drop', function (e) { e.preventDefault(); $('drop').hidden = true; var f = e.dataTransfer.files[0]; if (f) readFile(f); });
 
   function closeSideMobile() { $('app').classList.remove('side-open'); }
+  $('help-btn').onclick = function () { var o = !$('help-pop').classList.contains('open'); $('help-pop').classList.toggle('open', o); this.setAttribute('aria-expanded', o); };
+  document.addEventListener('pointerdown', function (e) { if (!e.target.closest('.side-foot')) { $('help-pop').classList.remove('open'); $('help-btn').setAttribute('aria-expanded', 'false'); } });
   $('side-btn').onclick = function (e) { e.stopPropagation(); $('app').classList.toggle('side-open'); };
 
   document.addEventListener('keydown', function (e) {
