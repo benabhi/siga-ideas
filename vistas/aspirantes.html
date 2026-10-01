@@ -14,15 +14,17 @@
   .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
   @media (max-width: 1240px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .kpi { text-align: left; padding: 14px 16px; cursor: pointer; display: grid; gap: 6px; transition: border-color .15s, box-shadow .15s; }
+  /* Misma estructura en todas las tarjetas: etiqueta + ícono, número, detalle; cada fila en una sola línea */
+  .kpi { text-align: left; padding: 14px 16px; cursor: pointer; display: grid; grid-template-rows: 30px auto auto; align-content: start; gap: 4px; min-width: 0; transition: border-color .15s, box-shadow .15s; }
   .kpi:hover { border-color: var(--border-strong); }
   .kpi[aria-pressed="true"] { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy); }
-  .kpi .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 500; }
-  .kpi .ico { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; }
+  .kpi .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; color: var(--muted); font-size: 13px; font-weight: 500; }
+  .kpi .top .lbl, .kpi .sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kpi .ico { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; }
   .kpi .ico svg.lucide { width: 16px; height: 16px; }
-  .kpi .val { display: flex; align-items: baseline; gap: 8px; }
+  .kpi .val { display: block; }
   .kpi .val strong { font-size: 28px; font-weight: 750; letter-spacing: -.02em; line-height: 1.1; }
-  .kpi .val span { color: var(--subtle); font-size: 12px; }
+  .kpi .sub { display: block; color: var(--subtle); font-size: 12px; }
 
   /* Cupos por carrera */
   .quota-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 24px; }
@@ -194,7 +196,7 @@
     var tiles = [
       { k: '', label: 'Total', icon: 'users', tone: 'slate', n: total, sub: '+' + semana + ' esta semana' },
       { k: 'preinscripto', n: count(function (a) { return a.estado === 'preinscripto'; }), sub: 'sin revisar' },
-      { k: 'en_revision', n: count(function (a) { return a.estado === 'en_revision'; }), sub: count(function (a) { return a.estado === 'en_revision' && S.docsResumen(a).rechazados; }) + ' con docs. observados' },
+      { k: 'en_revision', n: count(function (a) { return a.estado === 'en_revision'; }), sub: count(function (a) { return a.estado === 'en_revision' && S.docsResumen(a).rechazados; }) + ' con observaciones' },
       { k: 'lista_espera', n: count(function (a) { return a.estado === 'lista_espera'; }), sub: 'por cupo' },
       { k: 'confirmado', n: count(function (a) { return a.estado === 'confirmado'; }) },
       { k: 'rechazado', n: count(function (a) { return a.estado === 'rechazado'; }) }
@@ -203,8 +205,8 @@
       var e = S.ESTADOS[t.k] || {}, tone = t.tone || e.tone;
       var sub = t.sub || Math.round(t.n / total * 100) + '% del total';
       return '<button class="card kpi" data-k="' + t.k + '" aria-pressed="' + (st.estado === t.k) + '">' +
-        '<span class="top">' + (t.label || e.label) + '<span class="ico tone-' + tone + '"><i data-lucide="' + (t.icon || e.icon) + '"></i></span></span>' +
-        '<span class="val"><strong class="num">' + t.n + '</strong><span>' + sub + '</span></span></button>';
+        '<span class="top"><span class="lbl">' + (t.label || e.label) + '</span><span class="ico tone-' + tone + '"><i data-lucide="' + (t.icon || e.icon) + '"></i></span></span>' +
+        '<span class="val"><strong class="num">' + t.n + '</strong></span><span class="sub" title="' + sub + '">' + sub + '</span></button>';
     }).join('');
     $('nav-total').textContent = total;
     $('nav-docs').textContent = count(function (a) { return a.estado === 'preinscripto' || a.estado === 'en_revision'; });
