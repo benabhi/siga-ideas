@@ -173,7 +173,12 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .lvl line { stroke: var(--line); stroke-dasharray: 3 5; }
 .legend-btn { width: auto !important; padding: 0 8px; font-size: 12px; color: var(--muted); gap: 4px; display: inline-flex !important; align-items: center; }
 .legend-btn[aria-expanded="true"] { background: var(--panel); color: var(--ink); }
-.zoom button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.zoom button[aria-pressed="true"]:not(#z-full) { background: var(--ink); color: var(--card); }
+.app.canvas-only { grid-template-rows: minmax(0, 1fr); }
+.app.canvas-only .bar, .app.canvas-only .side { display: none !important; }
+.app.canvas-only .body { grid-template-columns: minmax(0, 1fr); }
+#z-full .i-exit, .app.canvas-only #z-full .i-enter { display: none; }
+.app.canvas-only #z-full .i-exit { display: block; }
 .zoom .sep { width: 1px; min-width: 0; height: 20px; background: var(--line); }
 .stage.has-drawer .zoom, .stage.has-drawer .legend { right: 454px; }
 @media (max-width: 820px) { .stage.has-drawer .zoom, .stage.has-drawer .legend { right: 14px; } }
@@ -283,7 +288,7 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
         <button role="tab" data-tab="notes" aria-selected="false">Revisión<span class="n" id="n-notes"></span></button>
       </div>
       <div class="list" id="list"></div>
-      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Doble clic en una tabla o en un módulo para acercarte; doble clic en el fondo para ver todo. Ctrl + rueda o pellizco para el zoom; teclas 1–7 para ir a cada módulo.</div>
+      <div class="side-foot">Para actualizar el diagrama, tocá <b>Importar</b> o arrastrá el <code>.txt</code> del modelo al lienzo. Arrastrá el lienzo para moverte y las tablas para reacomodarlas. Doble clic en una tabla o en un módulo para acercarte; doble clic en el fondo para ver todo. Ctrl + rueda o pellizco para el zoom; teclas 1–7 para ir a cada módulo; P para ver solo el lienzo.</div>
     </aside>
 
     <main class="stage" id="stage" aria-label="Diagrama del modelo de datos">
@@ -317,6 +322,7 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
         <button id="z-follow" aria-pressed="false" aria-label="Zoom automático" title="Zoom automático: al elegir una tabla, acercarse a ella y a sus conexiones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M11 8v6M8 11h6"/></svg></button>
         <button id="z-fit" aria-label="Ver todo" title="Ver todo (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/></svg></button>
         <button id="z-reset" aria-label="Reacomodar" title="Volver al orden calculado (descarta lo que moviste a mano)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
+        <button id="z-full" aria-pressed="false" aria-label="Solo el lienzo" title="Solo el lienzo, a pantalla completa (P)"><svg class="i-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="i-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
         <span class="sep hide-sm"></span>
         <button class="legend-btn hide-sm" id="legend-btn" aria-expanded="false" aria-controls="legend">Referencias</button>
       </div>
@@ -1919,6 +1925,22 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
   $('z-in').onclick = function () { var c = center(); zoomAt(c[0], c[1], 1.25, true); };
   $('z-out').onclick = function () { var c = center(); zoomAt(c[0], c[1], 0.8, true); };
   $('z-fit').onclick = function () { fitTo(null, true); };
+  // Solo lienzo: oculta la barra superior y el índice, e intenta pasar el navegador a pantalla completa.
+  function canvasOnly(on) {
+    var app = $('app');
+    if (on === app.classList.contains('canvas-only')) return;
+    app.classList.toggle('canvas-only', on);
+    $('z-full').setAttribute('aria-pressed', on);
+    $('z-full').setAttribute('aria-label', on ? 'Salir del modo lienzo' : 'Solo el lienzo');
+    $('z-full').title = on ? 'Salir del modo lienzo (P o Esc)' : 'Solo el lienzo, a pantalla completa (P)';
+    try {
+      if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(function () {});
+      if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+    } catch (err) {}
+    requestAnimationFrame(function () { if (S.sel) ensureVisible([S.sel]); else fitTo(S.modFocus ? M.modules.filter(function (x) { return x.name === S.modFocus; })[0].tables.map(function (t) { return t.name; }) : null, true); });
+  }
+  $('z-full').onclick = function () { canvasOnly(!$('app').classList.contains('canvas-only')); };
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement && $('app').classList.contains('canvas-only')) canvasOnly(false); });
   $('z-reset').onclick = function () { store(layoutKey(S.layout), null); applyLayout(S.layout, true); toast('Tablas reacomodadas'); };
   $('z-follow').onclick = function () { S.follow = !S.follow; this.setAttribute('aria-pressed', S.follow); store('siga-mapa-follow', S.follow); toast(S.follow ? 'Zoom automático activado' : 'Zoom automático desactivado'); };
   S.follow = !!store('siga-mapa-follow'); $('z-follow').setAttribute('aria-pressed', S.follow);
@@ -2128,7 +2150,8 @@ Ref: "actas"."id_acta" <? "actas"."ciclo_lectivo"
 
   document.addEventListener('keydown', function (e) {
     if (e.target.matches('input')) { if (e.key === 'Escape') { e.target.value = ''; e.target.dispatchEvent(new Event('input')); e.target.blur(); } return; }
-    if (e.key === 'Escape') { if (S.tour) endTour(); else if (S.sel) select(null); else if (S.modFocus) { S.modFocus = null; applyFocus(); } else if (!$('layouts').hidden) toggleLayoutMenu(false); else if (!$('legend').hidden) $('legend-btn').click(); }
+    if (e.key === 'p' || e.key === 'P') { $('z-full').click(); return; }
+    if (e.key === 'Escape') { if (S.tour) endTour(); else if (S.sel) select(null); else if (S.modFocus) { S.modFocus = null; applyFocus(); } else if (!$('layouts').hidden) toggleLayoutMenu(false); else if (!$('legend').hidden) $('legend-btn').click(); else if ($('app').classList.contains('canvas-only')) canvasOnly(false); }
     else if (e.key === '/') { e.preventDefault(); $('q').focus(); }
     else if (e.key === 'f' || e.key === 'F') { S.modFocus = null; applyFocus(); fitTo(null, true); }
     else if (/^[1-9]$/.test(e.key) && M.modules[+e.key - 1]) zoomModule(M.modules[+e.key - 1]);
